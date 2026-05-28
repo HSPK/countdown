@@ -2,9 +2,10 @@ import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import type { Todo } from '../store/todos'
 import { useTodos, type Recurrence } from '../store/todos'
-import { DatePicker } from './DatePicker'
+import { WheelPicker } from './WheelPicker'
 import { Markdown } from './Markdown'
 import { formatAbsolute } from '../lib/time'
+import { parseCron } from '../lib/recurrence'
 import { IconX, IconChevronDown } from './Icons'
 
 interface Props {
@@ -17,6 +18,7 @@ const RECURRENCE_OPTS: Array<{ value: Recurrence; label: string }> = [
   { value: 'daily',   label: '每天' },
   { value: 'weekly',  label: '每周' },
   { value: 'monthly', label: '每月' },
+  { value: 'custom',  label: '自定义' },
 ]
 
 export function EditModal({ todo, onClose }: Props) {
@@ -27,6 +29,7 @@ export function EditModal({ todo, onClose }: Props) {
   const [notes, setNotes] = useState('')
   const [tagsText, setTagsText] = useState('')
   const [recurrence, setRecurrence] = useState<Recurrence>('none')
+  const [cronExpr, setCronExpr] = useState('')
   const [showCreatedAt, setShowCreatedAt] = useState(false)
   const [showPreview, setShowPreview] = useState(false)
 
@@ -38,6 +41,7 @@ export function EditModal({ todo, onClose }: Props) {
       setNotes(todo.notes ?? '')
       setTagsText(todo.tags.map((t) => `#${t}`).join(' '))
       setRecurrence(todo.recurrence ?? 'none')
+      setCronExpr(todo.cronExpr ?? '')
       setShowCreatedAt(false)
       setShowPreview(false)
     }
@@ -63,8 +67,11 @@ export function EditModal({ todo, onClose }: Props) {
     tagsText.split(/[\s,，]+/).map((t) => t.replace(/^#/, '').trim()).filter(Boolean),
   ))
 
+  const cronValid = recurrence !== 'custom' || (cronExpr.trim() !== '' && parseCron(cronExpr.trim()) !== null)
+
   const save = () => {
     if (!title.trim() || !Number.isFinite(deadline)) return
+    if (!cronValid) return
     updateTodo(todo.id, {
       title: title.trim(),
       deadline,
@@ -72,6 +79,7 @@ export function EditModal({ todo, onClose }: Props) {
       notes: notes.trim() || undefined,
       tags,
       recurrence,
+      cronExpr: recurrence === 'custom' ? cronExpr.trim() : undefined,
     })
     onClose()
   }
@@ -134,6 +142,24 @@ export function EditModal({ todo, onClose }: Props) {
                   </button>
                 ))}
               </div>
+              {recurrence === 'custom' && (
+                <div className="edit__cron">
+                  <input
+                    className={'edit__input edit__cron-input' + (cronValid ? '' : ' edit__cron-input--invalid')}
+                    value={cronExpr}
+                    onChange={(e) => setCronExpr(e.target.value)}
+                    placeholder="0 9 * * 1-5"
+                    aria-label="cron 表达式"
+                    spellCheck={false}
+                  />
+                  <p className="edit__cron-hint">
+                    格式 <code>分 时 日 月 周</code> · 支持 <code>*</code> · <code>n</code> · <code>n,m</code> · <code>a-b</code> · <code>*/k</code>
+                  </p>
+                  {!cronValid && cronExpr.trim() !== '' && (
+                    <p className="edit__cron-error">无法解析的表达式</p>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
@@ -141,7 +167,7 @@ export function EditModal({ todo, onClose }: Props) {
           <div className="edit__field">
             <label className="edit__label">截止时间</label>
             <div className="edit__picker-wrap">
-              <DatePicker value={deadline} onChange={setDeadline} />
+              <WheelPicker value={deadline} onChange={setDeadline} />
             </div>
           </div>
 
@@ -166,7 +192,7 @@ export function EditModal({ todo, onClose }: Props) {
             </button>
             {showCreatedAt && (
               <div className="edit__picker-wrap">
-                <DatePicker value={createdAt} onChange={setCreatedAt} />
+                <WheelPicker value={createdAt} onChange={setCreatedAt} />
               </div>
             )}
           </div>
@@ -215,7 +241,7 @@ export function EditModal({ todo, onClose }: Props) {
           <span className="modal__hint">⌘ + Enter 保存</span>
           <div className="modal__footer-actions">
             <button className="btn" onClick={onClose}>取消</button>
-            <button className="btn btn--primary" onClick={save} disabled={!title.trim()}>保存</button>
+            <button className="btn btn--primary" onClick={save} disabled={!title.trim() || !cronValid}>保存</button>
           </div>
         </footer>
       </div>

@@ -549,6 +549,49 @@ kbd {
   color: var(--fg-muted);
   font-variant-numeric: tabular-nums;
 }
+.list__head-range {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--fg-muted);
+  letter-spacing: 0;
+  text-transform: none;
+  margin-left: 4px;
+  opacity: .7;
+}
+[data-theme="paper"] .list__head-range { font-family: var(--font-serif); font-style: italic; }
+
+/* Virtual recurring rows: subtle visual hint that this is a future
+   occurrence rather than the canonical (next) one. */
+.row[data-virtual="true"] {
+  opacity: .82;
+}
+.row[data-virtual="true"]:hover { opacity: 1; }
+
+/* Infinite-scroll sentinel */
+.list__sentinel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 28px 0 12px;
+  color: var(--fg-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  user-select: none;
+}
+.list__sentinel-pulse {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--fg-muted);
+  animation: sentinelPulse 1.2s ease-in-out infinite;
+}
+@keyframes sentinelPulse {
+  0%, 100% { opacity: 0.3; transform: scale(0.9); }
+  50%      { opacity: 1;   transform: scale(1.2); }
+}
 .list__spacer { flex: 1; }
 .list__head-btn {
   font-size: 11px;
@@ -1748,6 +1791,93 @@ kbd {
   letter-spacing: 0.02em; font-size: 18px;
 }
 
+/* ─── Wheel picker (iOS-style spinner for date + time) ─── */
+.wp {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+}
+.wp-row {
+  position: relative;
+  display: flex;
+  gap: 6px;
+  align-items: stretch;
+  /* Mask top/bottom so far rows fade away — gives the dial feel. */
+  mask-image: linear-gradient(180deg,
+    transparent 0%,
+    #000 22%,
+    #000 78%,
+    transparent 100%);
+  -webkit-mask-image: linear-gradient(180deg,
+    transparent 0%,
+    #000 22%,
+    #000 78%,
+    transparent 100%);
+}
+.wp-row--time { align-items: center; }
+.wp-band {
+  position: absolute;
+  left: 0; right: 0;
+  top: 80px;            /* 2 * ITEM_H */
+  height: 40px;         /* 1 * ITEM_H */
+  pointer-events: none;
+  border-top: 1px solid var(--hairline-strong);
+  border-bottom: 1px solid var(--hairline-strong);
+  border-radius: 6px;
+}
+[data-theme="cyberpunk"] .wp-band {
+  border-color: color-mix(in srgb, var(--accent) 50%, var(--hairline-strong));
+}
+.wp-sep {
+  align-self: center;
+  padding: 0 4px;
+  font-family: var(--font-mono);
+  font-size: 18px;
+  color: var(--fg-muted);
+}
+.wp-col {
+  flex: 1 1 0;
+  min-width: 0;
+  height: 200px;        /* 5 items visible */
+  overflow-y: scroll;
+  scroll-snap-type: y mandatory;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  outline: none;
+}
+.wp-col:focus-visible { box-shadow: inset 0 0 0 2px var(--accent); border-radius: 6px; }
+.wp-col__pad { height: 80px; }
+.wp-col__item {
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  scroll-snap-align: center;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 17px;
+  color: var(--fg-muted);
+  letter-spacing: 0.02em;
+  transition: color var(--dur-fast), font-weight var(--dur-fast);
+  user-select: none;
+}
+.wp-col__item--selected {
+  color: var(--fg);
+  font-weight: 600;
+}
+[data-theme="cyberpunk"] .wp-col__item--selected { color: var(--accent); text-shadow: 0 0 8px var(--accent); }
+.wp-lunar {
+  text-align: center;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--fg-muted);
+  letter-spacing: 0.06em;
+  min-height: 16px;
+  padding-top: 2px;
+}
+[data-theme="paper"] .wp-lunar { font-family: var(--font-serif); font-style: italic; font-size: 14px; }
+
 /* ─── Edit modal · sticky header / scrollable body / sticky footer ─── */
 .modal--edit {
   width: min(620px, 100%);
@@ -1901,6 +2031,36 @@ kbd {
 .edit__tags-preview {
   display: flex; flex-wrap: wrap; gap: 4px;
   margin-top: 2px;
+}
+
+.edit__cron { display: flex; flex-direction: column; gap: 6px; margin-top: 2px; }
+.edit__cron-input {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  letter-spacing: 0.02em;
+}
+.edit__cron-input--invalid { border-color: var(--u-critical); }
+.edit__cron-hint {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 11.5px;
+  color: var(--fg-muted);
+  letter-spacing: 0;
+}
+.edit__cron-hint code {
+  font-family: var(--font-mono);
+  background: var(--bg-2);
+  padding: 0 4px;
+  border-radius: 3px;
+  font-size: 11px;
+  color: var(--fg-2);
+  margin: 0 1px;
+}
+.edit__cron-error {
+  margin: 0;
+  font-size: 11.5px;
+  color: var(--u-critical);
+  font-family: var(--font-mono);
 }
 
 .edit__picker-wrap {

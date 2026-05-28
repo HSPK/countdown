@@ -16,7 +16,7 @@ import {
 } from './Icons'
 
 const RECURRENCE_LABEL: Record<string, string> = {
-  daily: '每天', weekly: '每周', monthly: '每月',
+  daily: '每天', weekly: '每周', monthly: '每月', custom: '自定义',
 }
 
 interface Props {
@@ -24,18 +24,25 @@ interface Props {
   onEdit: (todo: Todo) => void
   /** Whether to show source label on this row */
   showSource?: boolean
+  /** When set, the row is a virtual recurring occurrence. The displayed
+   *  deadline overrides todo.deadline; check completes only this
+   *  occurrence (advancing the parent past it). */
+  occurrenceDeadline?: number
 }
 
-export function TodoRow({ todo, onEdit, showSource }: Props) {
+export function TodoRow({ todo, onEdit, showSource, occurrenceDeadline }: Props) {
   const now = useNow()
   const toggleComplete = useTodos((s) => s.toggleComplete)
+  const completeOccurrence = useTodos((s) => s.completeOccurrence)
   const togglePin = useTodos((s) => s.togglePin)
   const removeTodo = useTodos((s) => s.removeTodo)
   const setFocus = useSettings((s) => s.setFocus)
   const source = useSources((s) => s.sources.find((x) => x.id === todo.sourceId))
   const isExternal = source?.type === 'url'
+  const isVirtual = occurrenceDeadline !== undefined
 
-  const remaining = todo.deadline - now
+  const effectiveDeadline = occurrenceDeadline ?? todo.deadline
+  const remaining = effectiveDeadline - now
   const u = todo.completedAt ? 'far' : urgencyOf(remaining)
   const overdue = remaining <= 0 && !todo.completedAt
 
@@ -59,20 +66,33 @@ export function TodoRow({ todo, onEdit, showSource }: Props) {
     }
   }, [menuOpen])
 
+  const onCheck = () => {
+    if (isVirtual) {
+      completeOccurrence(todo.id, effectiveDeadline)
+    } else {
+      toggleComplete(todo.id)
+    }
+  }
+
   return (
     <div
       className="row"
       data-completed={!!todo.completedAt}
+      data-virtual={isVirtual}
       tabIndex={0}
       role="button"
       onClick={(e) => {
         if ((e.target as HTMLElement).closest('button')) return
         if (todo.completedAt) return
+        /* Virtual rows don't enter focus (FocusView reads the live deadline
+           from the parent which would differ from this occurrence). Tap on
+           a virtual row opens edit instead so users can tweak the parent. */
+        if (isVirtual) { onEdit(todo); return }
         setFocus(todo.id)
       }}
       onKeyDown={(e) => {
-        if (e.key === 'Enter' && !todo.completedAt) setFocus(todo.id)
-        if (e.key === ' ') { e.preventDefault(); toggleComplete(todo.id) }
+        if (e.key === 'Enter' && !todo.completedAt && !isVirtual) setFocus(todo.id)
+        if (e.key === ' ') { e.preventDefault(); onCheck() }
       }}
     >
       <div
@@ -88,20 +108,20 @@ export function TodoRow({ todo, onEdit, showSource }: Props) {
 
       <div className="row__main">
         <div className="row__title-wrap">
-          {todo.pinned && (
+          {todo.pinned && !isVirtual && (
             <span className="row__title-icon" aria-label="已置顶" title="已置顶">
               <IconStarFill width={12} height={12} />
             </span>
           )}
           {todo.recurrence && todo.recurrence !== 'none' && (
-            <span className="row__title-icon" aria-label="重复任务" title={`重复 · ${RECURRENCE_LABEL[todo.recurrence]}`}>
+            <span className="row__title-icon" aria-label="重复任务" title={`重复 · ${RECURRENCE_LABEL[todo.recurrence] ?? ''}`}>
               <IconRepeat width={12} height={12} />
             </span>
           )}
           <span className="row__title">{todo.title}</span>
         </div>
         <div className="row__sub">
-          <span>{formatHM(todo.deadline)}</span>
+          <span>{formatHM(effectiveDeadline)}</span>
           {todo.recurrence && todo.recurrence !== 'none' && (
             <>
               <span className="row__sub-sep" aria-hidden>·</span>
@@ -131,8 +151,8 @@ export function TodoRow({ todo, onEdit, showSource }: Props) {
           <button
             className="row__action"
             aria-label={todo.completedAt ? '标记未完成' : '完成'}
-            title={todo.completedAt ? '标记未完成' : '完成 (Space)'}
-            onClick={() => toggleComplete(todo.id)}
+            title={todo.completedAt ? '标记未完成' : isVirtual ? '完成本次' : '完成 (Space)'}
+            onClick={onCheck}
           >
             <IconCheck />
           </button>
@@ -151,35 +171,39 @@ export function TodoRow({ todo, onEdit, showSource }: Props) {
             </button>
             {menuOpen && (
               <div className="row-menu" role="menu">
-                <button
-                  className="row-menu__item"
-                  role="menuitem"
-                  onClick={() => { togglePin(todo.id); setMenuOpen(false) }}
-                >
-                  <span className="row-menu__icon">
-                    {todo.pinned ? <IconStarFill width={14} height={14} /> : <IconStar width={14} height={14} />}
-                  </span>
-                  <span>{todo.pinned ? '取消置顶' : '置顶'}</span>
-                </button>
+                {!isVirtual && (
+                  <button
+                    className="row-menu__item"
+                    role="menuitem"
+                    onClick={() => { togglePin(todo.id); setMenuOpen(false) }}
+                  >
+                    <span className="row-menu__icon">
+                      {todo.pinned ? <IconStarFill width={14} height={14} /> : <IconStar width={14} height={14} />}
+                    </span>
+                    <span>{todo.pinned ? '取消置顶' : '置顶'}</span>
+                  </button>
+                )}
                 <button
                   className="row-menu__item"
                   role="menuitem"
                   onClick={() => { onEdit(todo); setMenuOpen(false) }}
                 >
                   <span className="row-menu__icon"><IconEdit width={14} height={14} /></span>
-                  <span>编辑</span>
+                  <span>{isVirtual ? '编辑原任务' : '编辑'}</span>
                 </button>
-                <button
-                  className="row-menu__item row-menu__item--danger"
-                  role="menuitem"
-                  onClick={() => {
-                    setMenuOpen(false)
-                    if (confirm(`删除「${todo.title}」？`)) removeTodo(todo.id)
-                  }}
-                >
-                  <span className="row-menu__icon"><IconTrash width={14} height={14} /></span>
-                  <span>删除</span>
-                </button>
+                {!isVirtual && (
+                  <button
+                    className="row-menu__item row-menu__item--danger"
+                    role="menuitem"
+                    onClick={() => {
+                      setMenuOpen(false)
+                      if (confirm(`删除「${todo.title}」？`)) removeTodo(todo.id)
+                    }}
+                  >
+                    <span className="row-menu__icon"><IconTrash width={14} height={14} /></span>
+                    <span>删除</span>
+                  </button>
+                )}
               </div>
             )}
           </div>

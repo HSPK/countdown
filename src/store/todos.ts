@@ -1,8 +1,9 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { uid } from '../lib/id'
+import { addMonthsClamped, nextOccurrence } from '../lib/recurrence'
 
-export type Recurrence = 'none' | 'daily' | 'weekly' | 'monthly'
+export type Recurrence = 'none' | 'daily' | 'weekly' | 'monthly' | 'custom'
 
 export interface Todo {
   id: string
@@ -15,6 +16,8 @@ export interface Todo {
   completedAt?: number
   pinned: boolean
   recurrence?: Recurrence
+  /** Cron expression "M H D MON DOW" — only used when recurrence === 'custom' */
+  cronExpr?: string
 }
 
 export interface NewTodoInput {
@@ -25,6 +28,7 @@ export interface NewTodoInput {
   sourceId?: string
   createdAt?: number
   recurrence?: Recurrence
+  cronExpr?: string
 }
 
 interface TodoState {
@@ -33,6 +37,9 @@ interface TodoState {
   updateTodo: (id: string, patch: Partial<Omit<Todo, 'id'>>) => void
   removeTodo: (id: string) => void
   toggleComplete: (id: string) => void
+  /** Complete a specific virtual occurrence of a recurring todo. Advances
+   *  the parent deadline until it is strictly past `occurrenceTs` (or now). */
+  completeOccurrence: (id: string, occurrenceTs: number) => void
   togglePin: (id: string) => void
   clearCompleted: () => void
   /** Replace all todos that belong to a given sourceId (used by subscription refresh). */
@@ -43,15 +50,11 @@ interface TodoState {
   dropSource: (sourceId: string) => void
 }
 
-function advanceDeadline(ts: number, kind: Recurrence): number {
+function advanceDeadline(ts: number, kind: Recurrence, cronExpr?: string): number {
   if (kind === 'none' || !kind) return ts
-  const d = new Date(ts)
-  switch (kind) {
-    case 'daily':   d.setDate(d.getDate() + 1); break
-    case 'weekly':  d.setDate(d.getDate() + 7); break
-    case 'monthly': d.setMonth(d.getMonth() + 1); break
-  }
-  return d.getTime()
+  if (kind === 'monthly') return addMonthsClamped(ts, 1)
+  const next = nextOccurrence(ts, kind, cronExpr)
+  return next ?? ts
 }
 
 export const useTodos = create<TodoState>()(
@@ -70,6 +73,7 @@ export const useTodos = create<TodoState>()(
           createdAt: input.createdAt ?? Date.now(),
           pinned: false,
           recurrence: input.recurrence ?? 'none',
+          cronExpr: input.cronExpr,
         }
         set({ todos: [...get().todos, todo] })
         return id
@@ -87,7 +91,7 @@ export const useTodos = create<TodoState>()(
            Already-completed recurring items still toggle back to active. */
         const isRec = t.recurrence && t.recurrence !== 'none'
         if (isRec && !t.completedAt) {
-          const nextDeadline = advanceDeadline(t.deadline, t.recurrence as Recurrence)
+          const nextDeadline = advanceDeadline(t.deadline, t.recurrence as Recurrence, t.cronExpr)
           set({
             todos: get().todos.map((x) =>
               x.id === id ? { ...x, deadline: nextDeadline, createdAt: Date.now() } : x,
@@ -100,6 +104,35 @@ export const useTodos = create<TodoState>()(
             x.id === id
               ? { ...x, completedAt: x.completedAt ? undefined : Date.now() }
               : x,
+          ),
+        })
+      },
+      completeOccurrence: (id, occurrenceTs) => {
+        const t = get().todos.find((x) => x.id === id)
+        if (!t) return
+        const isRec = t.recurrence && t.recurrence !== 'none'
+        if (!isRec) {
+          /* Non-recurring: just mark complete. */
+          set({
+            todos: get().todos.map((x) =>
+              x.id === id ? { ...x, completedAt: Date.now() } : x,
+            ),
+          })
+          return
+        }
+        /* Advance the parent forward (strictly) past the completed
+           occurrence. Cap iterations to keep us safe from weird crons. */
+        let d = t.deadline
+        let guard = 0
+        const target = Math.max(occurrenceTs, Date.now() - 60_000)
+        while (d <= target && guard++ < 500) {
+          const nd = advanceDeadline(d, t.recurrence as Recurrence, t.cronExpr)
+          if (nd <= d) break
+          d = nd
+        }
+        set({
+          todos: get().todos.map((x) =>
+            x.id === id ? { ...x, deadline: d, createdAt: Date.now() } : x,
           ),
         })
       },
@@ -142,6 +175,7 @@ export const useTodos = create<TodoState>()(
           completedAt: t.completedAt,
           pinned: !!t.pinned,
           recurrence: (t.recurrence as Recurrence) ?? 'none',
+          cronExpr: t.cronExpr,
         }))
         return { todos }
       },

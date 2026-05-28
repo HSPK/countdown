@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTodos } from '../store/todos'
 import { ABSOLUTE_PRESETS, RELATIVE_PRESETS, type AbsolutePreset } from '../lib/datePresets'
 import { formatHM, pad } from '../lib/time'
-import { DatePicker } from './DatePicker'
+import { WheelPicker } from './WheelPicker'
 import { IconPlus, IconX, IconChevronDown, IconArrowUp, IconCalendar } from './Icons'
 
 interface Props {
@@ -265,7 +265,7 @@ export function Composer({ inputRef }: Props) {
 
           {showCalendar && (
             <div className="compose-picker">
-              <DatePicker value={choice.kind === 'custom' ? choice.ts : Date.now()}
+              <WheelPicker value={choice.kind === 'custom' ? choice.ts : Date.now()}
                 onChange={(ts) => setChoice({ kind: 'custom', ts })} />
             </div>
           )}

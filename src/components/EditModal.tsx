@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import type { Todo } from '../store/todos'
 import { useTodos, type Recurrence } from '../store/todos'
 import { DatePicker } from './DatePicker'
@@ -75,7 +76,7 @@ export function EditModal({ todo, onClose }: Props) {
     onClose()
   }
 
-  return (
+  return createPortal(
     <div
       className="modal-backdrop"
       role="dialog"
@@ -218,6 +219,7 @@ export function EditModal({ todo, onClose }: Props) {
           </div>
         </footer>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }

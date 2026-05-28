@@ -564,7 +564,11 @@ kbd {
 /* Row */
 .row {
   display: grid;
-  grid-template-columns: minmax(96px, 140px) 1fr auto;
+  /* Single clamped value — NOT minmax — so every row in a list uses the
+     identical time-column width. minmax allows each grid (each `.row`)
+     to size independently based on its own content, which makes titles
+     start at different x-positions across rows. */
+  grid-template-columns: clamp(78px, 11vw, 132px) 1fr auto;
   align-items: center;
   gap: clamp(12px, 2vw, 28px);
   padding: 14px 14px;
@@ -733,7 +737,9 @@ kbd {
 .row-menu__item--danger .row-menu__icon { color: var(--u-critical); }
 
 @media (max-width: 600px) {
-  .row { grid-template-columns: auto 1fr auto; gap: 12px; padding: 14px 10px; margin: 0 -10px; }
+  /* Inherit the clamped time-column from the base rule so titles stay
+     aligned. Only tweak gap / padding / time font here. */
+  .row { gap: 12px; padding: 14px 10px; margin: 0 -10px; }
   .row__time { font-size: 15px; }
   .row:hover { background: var(--bg-2); }
   .row__actions { opacity: 1; }
@@ -1745,11 +1751,14 @@ kbd {
 /* ─── Edit modal · sticky header / scrollable body / sticky footer ─── */
 .modal--edit {
   width: min(620px, 100%);
-  /* The backdrop is `display: flex` with safe-area + 20px padding on every
-     side. `max-height: 100%` here means 100% of the backdrop's content
-     box (already minus padding), so the modal never overflows even when
-     iOS notch / home indicator add extra safe-area-insets. */
+  /* Belt-and-braces: 100% of the backdrop's content box (already minus
+     safe-area padding) AND an explicit dvh-based calc so iOS Safari
+     can't expand it past the visible area when the address bar shows. */
   max-height: 100%;
+  max-height: calc(100dvh
+    - max(env(safe-area-inset-top, 0px), 20px)
+    - max(env(safe-area-inset-bottom, 0px), 20px));
+  min-height: 0;
   padding: 0;
   gap: 0;
   border-radius: 14px;
@@ -1781,8 +1790,11 @@ kbd {
 }
 .modal__close:hover { color: var(--fg); background: var(--bg-2); }
 .modal__body {
-  flex: 1;
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
   padding: 20px 22px;
   display: flex; flex-direction: column;
   gap: 22px;

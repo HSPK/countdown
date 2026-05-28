@@ -12,6 +12,7 @@ interface Props {
 }
 
 const ITEM_H = 40
+const PAD_ITEMS = 1            // items of padding above/below the center
 
 function clamp(n: number, lo: number, hi: number): number {
   return Math.max(lo, Math.min(hi, n))
@@ -80,8 +81,11 @@ function Column({ items, value, onChange, ariaLabel }: ColumnProps) {
           onChange(items[next].value)
         }
       }}
+      style={{
+        height: (PAD_ITEMS * 2 + 1) * ITEM_H,
+      }}
     >
-      <div className="wp-col__pad" aria-hidden />
+      <div className="wp-col__pad" aria-hidden style={{ height: PAD_ITEMS * ITEM_H }} />
       {items.map((it, i) => (
         <div
           key={it.key}
@@ -92,7 +96,7 @@ function Column({ items, value, onChange, ariaLabel }: ColumnProps) {
           {it.label}
         </div>
       ))}
-      <div className="wp-col__pad" aria-hidden />
+      <div className="wp-col__pad" aria-hidden style={{ height: PAD_ITEMS * ITEM_H }} />
     </div>
   )
 }

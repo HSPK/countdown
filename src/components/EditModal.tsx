@@ -30,8 +30,9 @@ export function EditModal({ todo, onClose }: Props) {
   const [tagsText, setTagsText] = useState('')
   const [recurrence, setRecurrence] = useState<Recurrence>('none')
   const [cronExpr, setCronExpr] = useState('')
+  const [showDeadlinePicker, setShowDeadlinePicker] = useState(false)
   const [showCreatedAt, setShowCreatedAt] = useState(false)
-  const [showPreview, setShowPreview] = useState(false)
+  const [previewMode, setPreviewMode] = useState(false)
 
   useEffect(() => {
     if (todo) {
@@ -42,8 +43,9 @@ export function EditModal({ todo, onClose }: Props) {
       setTagsText(todo.tags.map((t) => `#${t}`).join(' '))
       setRecurrence(todo.recurrence ?? 'none')
       setCronExpr(todo.cronExpr ?? '')
+      setShowDeadlinePicker(false)
       setShowCreatedAt(false)
-      setShowPreview(false)
+      setPreviewMode(false)
     }
   }, [todo])
 
@@ -105,7 +107,6 @@ export function EditModal({ todo, onClose }: Props) {
           <input
             className="edit__title"
             value={title}
-            autoFocus
             placeholder="任务标题"
             onChange={(e) => setTitle(e.target.value)}
           />
@@ -163,12 +164,30 @@ export function EditModal({ todo, onClose }: Props) {
             </div>
           </div>
 
-          {/* Deadline */}
+          {/* Deadline (collapsible, default closed) */}
           <div className="edit__field">
-            <label className="edit__label">截止时间</label>
-            <div className="edit__picker-wrap">
-              <WheelPicker value={deadline} onChange={setDeadline} />
-            </div>
+            <button
+              type="button"
+              className="edit__collapsible"
+              aria-expanded={showDeadlinePicker}
+              onClick={() => setShowDeadlinePicker((v) => !v)}
+            >
+              <span className="edit__collapsible-label">截止时间</span>
+              <span className="edit__collapsible-value">{formatAbsolute(deadline)}</span>
+              <IconChevronDown
+                width={14} height={14}
+                style={{
+                  transform: showDeadlinePicker ? 'rotate(180deg)' : 'none',
+                  transition: 'transform 200ms',
+                  color: 'var(--fg-muted)',
+                }}
+              />
+            </button>
+            {showDeadlinePicker && (
+              <div className="edit__picker-wrap">
+                <WheelPicker value={deadline} onChange={setDeadline} />
+              </div>
+            )}
           </div>
 
           {/* Created (collapsible) */}
@@ -197,40 +216,33 @@ export function EditModal({ todo, onClose }: Props) {
             )}
           </div>
 
-          {/* Notes — Markdown editor with toggle preview */}
+          {/* Notes — Markdown editor that toggles between edit and preview */}
           <div className="edit__field">
             <div className="edit__notes-head">
               <label className="edit__label">备注 · Markdown</label>
               <button
                 type="button"
                 className="edit__notes-toggle"
-                aria-pressed={showPreview}
-                onClick={() => setShowPreview((v) => !v)}
+                aria-pressed={previewMode}
+                onClick={() => setPreviewMode((v) => !v)}
+                title={previewMode ? '回到编辑' : '查看预览'}
               >
-                {showPreview ? '隐藏预览' : '显示预览'}
+                {previewMode ? '编辑' : '预览'}
               </button>
             </div>
-            {showPreview ? (
-              <div className="notes-editor">
-                <textarea
-                  className="edit__textarea"
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  placeholder="**粗体** *斜体* `代码` - 列表 > 引用"
-                />
-                <div className="notes-editor__preview">
-                  {notes.trim()
-                    ? <Markdown source={notes} />
-                    : <div className="notes-editor__preview-empty">预览</div>}
-                </div>
+            {previewMode ? (
+              <div className="edit__notes-preview">
+                {notes.trim()
+                  ? <Markdown source={notes} />
+                  : <div className="edit__notes-preview-empty">（暂无内容）</div>}
               </div>
             ) : (
               <textarea
                 className="edit__textarea"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                rows={4}
-                placeholder="支持 Markdown"
+                rows={6}
+                placeholder="**粗体** *斜体* `代码` - 列表 > 引用"
               />
             )}
           </div>

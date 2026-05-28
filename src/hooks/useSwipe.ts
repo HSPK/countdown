@@ -52,13 +52,18 @@ export function useSwipe(
       if (dt > maxDuration) return
       if (Math.abs(dx) < threshold) return
       if (Math.abs(dx) < Math.abs(dy) * ratio) return
+      /* Swipe gesture detected. Suppress the synthetic click iOS Safari
+         emits after touchend — without this, the click bubbles into the
+         tabbar area underneath and steals the next tap. */
+      e.preventDefault()
       if (dx < 0) cbRef.current.onLeft()
       else cbRef.current.onRight()
     }
     const onCancel = () => { tracking = false }
 
     el.addEventListener('touchstart', onStart, { passive: true })
-    el.addEventListener('touchend', onEnd, { passive: true })
+    /* Non-passive touchend so we can preventDefault() on swipe. */
+    el.addEventListener('touchend', onEnd, { passive: false })
     el.addEventListener('touchcancel', onCancel, { passive: true })
     return () => {
       el.removeEventListener('touchstart', onStart)

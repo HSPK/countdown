@@ -200,7 +200,7 @@ export function SettingsTab() {
         <ListRow
           icon={<IconExternal width={14} height={14} />}
           title="项目"
-          desc="CountDown · v0.22 · 完全 Serverless"
+          desc="CountDown · v0.23 · 完全 Serverless"
         />
       </Section>
 

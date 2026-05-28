@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react'
 import type { Todo } from '../store/todos'
 import { useTodos } from '../store/todos'
 import { useSettings } from '../store/settings'
@@ -7,11 +8,11 @@ import { formatHM, formatRowTime, urgencyOf } from '../lib/time'
 import {
   IconCheck,
   IconEdit,
-  IconMaximize,
-  IconStar,
   IconStarFill,
   IconTrash,
+  IconStar,
   IconRepeat,
+  IconMoreHorizontal,
 } from './Icons'
 
 const RECURRENCE_LABEL: Record<string, string> = {
@@ -37,6 +38,26 @@ export function TodoRow({ todo, onEdit, showSource }: Props) {
   const remaining = todo.deadline - now
   const u = todo.completedAt ? 'far' : urgencyOf(remaining)
   const overdue = remaining <= 0 && !todo.completedAt
+
+  const [menuOpen, setMenuOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement | null>(null)
+
+  /* Close kebab menu on outside tap / Esc */
+  useEffect(() => {
+    if (!menuOpen) return
+    const onDown = (e: MouseEvent | TouchEvent) => {
+      if (!menuRef.current?.contains(e.target as Node)) setMenuOpen(false)
+    }
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setMenuOpen(false) }
+    document.addEventListener('mousedown', onDown)
+    document.addEventListener('touchstart', onDown, { passive: true })
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onDown)
+      document.removeEventListener('touchstart', onDown)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [menuOpen])
 
   return (
     <div
@@ -101,46 +122,51 @@ export function TodoRow({ todo, onEdit, showSource }: Props) {
           </button>
         )}
         {!isExternal && (
-          <button
-            className="row__action"
-            aria-label="置顶"
-            title={todo.pinned ? '取消置顶' : '置顶'}
-            onClick={() => togglePin(todo.id)}
-          >
-            {todo.pinned ? <IconStarFill /> : <IconStar />}
-          </button>
-        )}
-        {!isExternal && (
-          <button
-            className="row__action"
-            aria-label="编辑"
-            title="编辑"
-            onClick={() => onEdit(todo)}
-          >
-            <IconEdit />
-          </button>
-        )}
-        {!todo.completedAt && (
-          <button
-            className="row__action"
-            aria-label="全屏专注"
-            title="全屏专注"
-            onClick={() => setFocus(todo.id)}
-          >
-            <IconMaximize />
-          </button>
-        )}
-        {!isExternal && (
-          <button
-            className="row__action row__action--danger"
-            aria-label="删除"
-            title="删除"
-            onClick={() => {
-              if (confirm(`删除「${todo.title}」？`)) removeTodo(todo.id)
-            }}
-          >
-            <IconTrash />
-          </button>
+          <div className="row-menu-wrap" ref={menuRef}>
+            <button
+              className="row__action"
+              aria-label="更多操作"
+              title="更多"
+              aria-haspopup="menu"
+              aria-expanded={menuOpen}
+              onClick={() => setMenuOpen((v) => !v)}
+            >
+              <IconMoreHorizontal />
+            </button>
+            {menuOpen && (
+              <div className="row-menu" role="menu">
+                <button
+                  className="row-menu__item"
+                  role="menuitem"
+                  onClick={() => { togglePin(todo.id); setMenuOpen(false) }}
+                >
+                  <span className="row-menu__icon">
+                    {todo.pinned ? <IconStarFill width={14} height={14} /> : <IconStar width={14} height={14} />}
+                  </span>
+                  <span>{todo.pinned ? '取消置顶' : '置顶'}</span>
+                </button>
+                <button
+                  className="row-menu__item"
+                  role="menuitem"
+                  onClick={() => { onEdit(todo); setMenuOpen(false) }}
+                >
+                  <span className="row-menu__icon"><IconEdit width={14} height={14} /></span>
+                  <span>编辑</span>
+                </button>
+                <button
+                  className="row-menu__item row-menu__item--danger"
+                  role="menuitem"
+                  onClick={() => {
+                    setMenuOpen(false)
+                    if (confirm(`删除「${todo.title}」？`)) removeTodo(todo.id)
+                  }}
+                >
+                  <span className="row-menu__icon"><IconTrash width={14} height={14} /></span>
+                  <span>删除</span>
+                </button>
+              </div>
+            )}
+          </div>
         )}
       </div>
     </div>

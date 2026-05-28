@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 
 interface Options {
   threshold?: number      // minimum horizontal distance (px)
@@ -7,7 +7,12 @@ interface Options {
 }
 
 /** Detect horizontal swipe gestures on the given element ref.
- *  Only fires on quick, predominantly-horizontal touches. */
+ *  Only fires on quick, predominantly-horizontal touches.
+ *
+ *  Implementation note: callbacks are stored in a ref so listeners are
+ *  attached exactly once per element. If we put `onLeft`/`onRight` in the
+ *  effect deps, they'd recreate every render and cause teardown/reattach
+ *  churn that can interfere with iOS Safari touch→click synthesis. */
 export function useSwipe(
   ref: React.RefObject<HTMLElement | null>,
   onLeft: () => void,   // swipe finger right→left  (i.e. next page)
@@ -15,6 +20,10 @@ export function useSwipe(
   opts: Options = {},
 ) {
   const { threshold = 60, ratio = 1.4, maxDuration = 800 } = opts
+  const cbRef = useRef({ onLeft, onRight })
+  cbRef.current.onLeft = onLeft
+  cbRef.current.onRight = onRight
+
   useEffect(() => {
     const el = ref.current
     if (!el) return
@@ -43,8 +52,8 @@ export function useSwipe(
       if (dt > maxDuration) return
       if (Math.abs(dx) < threshold) return
       if (Math.abs(dx) < Math.abs(dy) * ratio) return
-      if (dx < 0) onLeft()
-      else onRight()
+      if (dx < 0) cbRef.current.onLeft()
+      else cbRef.current.onRight()
     }
     const onCancel = () => { tracking = false }
 
@@ -56,5 +65,5 @@ export function useSwipe(
       el.removeEventListener('touchend', onEnd)
       el.removeEventListener('touchcancel', onCancel)
     }
-  }, [ref, onLeft, onRight, threshold, ratio, maxDuration])
+  }, [ref, threshold, ratio, maxDuration])
 }

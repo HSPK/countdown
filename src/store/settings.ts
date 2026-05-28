@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
-export type ThemeName = 'mono-light' | 'mono-dark' | 'paper' | 'cyberpunk'
+export type ThemeName = 'mono-light' | 'mono-dark' | 'paper' | 'cyberpunk' | 'flip'
 export type TabId = 'home' | 'all' | 'settings'
 
 export interface ThemeMeta {
@@ -15,6 +15,7 @@ export const THEMES: ThemeMeta[] = [
   { id: 'mono-dark',  name: 'Mono Dark',  hint: 'SANS · DARK'  },
   { id: 'paper',      name: 'Paper',      hint: 'serif'        },
   { id: 'cyberpunk',  name: 'Cyberpunk',  hint: 'NEON · MONO'  },
+  { id: 'flip',       name: 'Flip Clock', hint: 'AMBER · CARDS' },
 ]
 
 interface SettingsState {
@@ -59,7 +60,7 @@ export const useSettings = create<SettingsState>()(
         let theme: ThemeName = 'mono-light'
         if (s?.theme) {
           const mapped = map[s.theme] || s.theme
-          const valid: ThemeName[] = ['mono-light', 'mono-dark', 'paper', 'cyberpunk']
+          const valid: ThemeName[] = ['mono-light', 'mono-dark', 'paper', 'cyberpunk', 'flip']
           if (valid.includes(mapped as ThemeName)) theme = mapped as ThemeName
         }
         const validTabs: TabId[] = ['home', 'all', 'settings']

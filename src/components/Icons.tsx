@@ -26,6 +26,13 @@ export const IconX = (p: P) => <svg {...base} {...p}><path d="M6 6l12 12M18 6L6 
 export const IconChevronLeft = (p: P) => <svg {...base} {...p}><path d="M15 6l-6 6 6 6" /></svg>
 export const IconChevronRight = (p: P) => <svg {...base} {...p}><path d="M9 6l6 6-6 6" /></svg>
 export const IconChevronDown = (p: P) => <svg {...base} {...p}><path d="M6 9l6 6 6-6" /></svg>
+export const IconMoreHorizontal = (p: P) => (
+  <svg {...base} fill="currentColor" stroke="none" {...p}>
+    <circle cx="5" cy="12" r="1.5" />
+    <circle cx="12" cy="12" r="1.5" />
+    <circle cx="19" cy="12" r="1.5" />
+  </svg>
+)
 export const IconArrowLeft = (p: P) => <svg {...base} {...p}><path d="M19 12H5M11 6l-6 6 6 6" /></svg>
 export const IconRepeat = (p: P) => (
   <svg {...base} {...p}>

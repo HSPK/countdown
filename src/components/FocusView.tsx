@@ -4,7 +4,25 @@ import { useSettings } from '../store/settings'
 import { useSources } from '../store/sources'
 import { useNowFast } from '../hooks/useNow'
 import { diffParts, formatAbsolute, pad, progressPct, urgencyOf } from '../lib/time'
-import { IconX, IconArrowLeft, IconMaximize, IconMinimize } from './Icons'
+import { IconX, IconMaximize, IconMinimize } from './Icons'
+
+/* Each glyph in its own fixed-width cell so the layout never shifts when
+   digits tick. The inner span is keyed on (index, char) so the entry
+   animation (used by themes like flip) fires whenever a digit changes. */
+function Digits({ value, label }: { value: string; label: string }) {
+  return (
+    <div className="focus__seg">
+      <span className="focus__seg-num digits">
+        {value.split('').map((ch, i) => (
+          <span className="digits__cell" key={i}>
+            <span className="digits__inner" key={`${i}-${ch}`}>{ch}</span>
+          </span>
+        ))}
+      </span>
+      <span className="focus__seg-label">{label}</span>
+    </div>
+  )
+}
 
 export function FocusView() {
   const focusId = useSettings((s) => s.focusId)
@@ -35,6 +53,43 @@ export function FocusView() {
       window.removeEventListener('keydown', reset)
       window.removeEventListener('touchstart', reset)
       if (idleTimer.current) window.clearTimeout(idleTimer.current)
+    }
+  }, [focusId])
+
+  /* Keep the screen awake while focused. Wake Lock API; gracefully no-op on
+     browsers that don't support it (iOS Safari pre-16.4 etc.). Re-acquire
+     when the tab becomes visible again — the OS auto-releases on hide. */
+  useEffect(() => {
+    if (!focusId) return
+    const nav = navigator as Navigator & {
+      wakeLock?: { request: (type: 'screen') => Promise<{
+        release: () => Promise<void>
+        addEventListener?: (ev: string, cb: () => void) => void
+      }> }
+    }
+    if (!nav.wakeLock?.request) return
+
+    let sentinel: Awaited<ReturnType<typeof nav.wakeLock.request>> | null = null
+    let alive = true
+
+    const acquire = async () => {
+      if (!alive || sentinel || document.visibilityState !== 'visible') return
+      try {
+        sentinel = await nav.wakeLock!.request('screen')
+        sentinel.addEventListener?.('release', () => { sentinel = null })
+      } catch { /* user denied / power-saver / unsupported */ }
+    }
+    acquire()
+    const onVis = () => {
+      if (document.visibilityState === 'visible') acquire()
+    }
+    document.addEventListener('visibilitychange', onVis)
+
+    return () => {
+      alive = false
+      document.removeEventListener('visibilitychange', onVis)
+      sentinel?.release().catch(() => {})
+      sentinel = null
     }
   }, [focusId])
 
@@ -149,14 +204,6 @@ export function FocusView() {
       <div className="focus__bg" aria-hidden />
 
       <div className="focus__chrome focus__top">
-        <button
-          className="focus__top-btn"
-          aria-label="返回看板 (Esc)"
-          title="返回看板 (Esc)"
-          onClick={() => setFocus(null)}
-        >
-          <IconArrowLeft />
-        </button>
         <span className="focus__crumb">{source && source.id !== 'local' ? source.name : '本地'}</span>
         <span className="focus__top-spacer" />
         <button
@@ -194,27 +241,15 @@ export function FocusView() {
               'focus__digits' +
               (overdue ? ' focus__digits--overdue' : u === 'critical' ? ' focus__digits--critical' : '')
             }
-            aria-live="polite"
+            aria-live="off"
           >
-            <div className="focus__seg">
-              <span className="focus__seg-num">{pad(d)}</span>
-              <span className="focus__seg-label">Days</span>
-            </div>
-            <span className="focus__sep">:</span>
-            <div className="focus__seg">
-              <span className="focus__seg-num">{pad(h)}</span>
-              <span className="focus__seg-label">Hours</span>
-            </div>
-            <span className="focus__sep">:</span>
-            <div className="focus__seg">
-              <span className="focus__seg-num">{pad(m)}</span>
-              <span className="focus__seg-label">Min</span>
-            </div>
-            <span className="focus__sep">:</span>
-            <div className="focus__seg">
-              <span className="focus__seg-num">{pad(s)}</span>
-              <span className="focus__seg-label">Sec</span>
-            </div>
+            <Digits value={pad(d)} label="Days" />
+            <span className="focus__sep" aria-hidden>:</span>
+            <Digits value={pad(h)} label="Hours" />
+            <span className="focus__sep" aria-hidden>:</span>
+            <Digits value={pad(m)} label="Min" />
+            <span className="focus__sep" aria-hidden>:</span>
+            <Digits value={pad(s)} label="Sec" />
           </div>
         </div>
 

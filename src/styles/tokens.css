@@ -115,3 +115,33 @@
 
   color-scheme: dark;
 }
+
+/* Flip Clock — dark amber cards with vintage railway-station vibe.
+   The digit cell rendering (in globals.css) provides the flip animation
+   and the horizontal split line. */
+[data-theme="flip"] {
+  --bg:           #0E0B0A;
+  --bg-2:         #181412;
+  --bg-overlay:   rgba(14, 11, 10, 0.94);
+  --bg-popover:   #1C1715;
+  --fg:           #F4E8C1;
+  --fg-2:         #BFAE89;
+  --fg-muted:     #756A56;
+  --hairline:     rgba(244, 232, 193, 0.10);
+  --hairline-strong: rgba(244, 232, 193, 0.28);
+  --accent:       #FFAA3A;
+  --on-accent:    #1C1715;
+
+  --u-soon:       #E5A24B;
+  --u-critical:   #F26A4F;
+  --u-overdue:    #756A56;
+  --u-done:       #6A6052;
+
+  --font-display: 'Space Grotesk', 'Inter', system-ui, sans-serif;
+  --font-body:    'Inter', system-ui, sans-serif;
+  --font-digits:  'Space Grotesk', 'Inter', system-ui, sans-serif;
+  --digit-weight: 700;
+  --digit-tracking: -0.02em;
+
+  color-scheme: dark;
+}

@@ -4,6 +4,7 @@ import { useTodos, type Recurrence } from '../store/todos'
 import { DatePicker } from './DatePicker'
 import { Markdown } from './Markdown'
 import { formatAbsolute } from '../lib/time'
+import { IconX, IconChevronDown } from './Icons'
 
 interface Props {
   todo: Todo | null
@@ -26,7 +27,7 @@ export function EditModal({ todo, onClose }: Props) {
   const [tagsText, setTagsText] = useState('')
   const [recurrence, setRecurrence] = useState<Recurrence>('none')
   const [showCreatedAt, setShowCreatedAt] = useState(false)
-  const [showPreview, setShowPreview] = useState(true)
+  const [showPreview, setShowPreview] = useState(false)
 
   useEffect(() => {
     if (todo) {
@@ -37,16 +38,23 @@ export function EditModal({ todo, onClose }: Props) {
       setTagsText(todo.tags.map((t) => `#${t}`).join(' '))
       setRecurrence(todo.recurrence ?? 'none')
       setShowCreatedAt(false)
-      setShowPreview(!!todo.notes)
+      setShowPreview(false)
     }
   }, [todo])
 
   useEffect(() => {
     if (!todo) return
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+        e.preventDefault()
+        save()
+      }
+    }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [todo, onClose])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [todo, onClose, title, deadline, createdAt, notes, tagsText, recurrence])
 
   if (!todo) return null
 
@@ -74,115 +82,141 @@ export function EditModal({ todo, onClose }: Props) {
       aria-modal="true"
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
     >
-      <div className="modal modal--wide">
-        <div className="modal__title">编辑任务</div>
+      <div className="modal modal--edit">
+        <header className="modal__header">
+          <h2 className="modal__h2">编辑任务</h2>
+          <button className="modal__close" aria-label="关闭" onClick={onClose}>
+            <IconX width={16} height={16} />
+          </button>
+        </header>
 
-        <div className="field">
-          <span className="field__label">Title</span>
-          <input value={title} autoFocus onChange={(e) => setTitle(e.target.value)} />
-        </div>
+        <div className="modal__body">
 
-        <div className="field">
-          <span className="field__label">Tags</span>
+          {/* Title — most prominent */}
           <input
-            value={tagsText}
-            onChange={(e) => setTagsText(e.target.value)}
-            placeholder="#工作 #学习  ·  空格或逗号分隔"
+            className="edit__title"
+            value={title}
+            autoFocus
+            placeholder="任务标题"
+            onChange={(e) => setTitle(e.target.value)}
           />
-          {tags.length > 0 && (
-            <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 4 }}>
-              {tags.map((t) => <span key={t} className="tag">#{t}</span>)}
-            </div>
-          )}
-        </div>
 
-        <div className="field">
-          <span className="field__label">Repeat · 重复</span>
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-            {RECURRENCE_OPTS.map((opt) => (
-              <button
-                key={opt.value}
-                type="button"
-                className="tag tag--filter"
-                aria-pressed={recurrence === opt.value}
-                onClick={() => setRecurrence(opt.value)}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="field">
-          <span className="field__label">Deadline · 截止时间</span>
-          <DatePicker value={deadline} onChange={setDeadline} />
-        </div>
-
-        <div className="field">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <span className="field__label" style={{ margin: 0 }}>Created · 创建时间</span>
-            <button
-              type="button"
-              className="list__head-btn"
-              onClick={() => setShowCreatedAt((v) => !v)}
-            >
-              {showCreatedAt ? '收起' : '编辑'}
-            </button>
-            {!showCreatedAt && (
-              <span style={{ fontSize: 12, color: 'var(--fg-muted)', fontFamily: 'var(--font-mono)' }}>
-                {formatAbsolute(createdAt)}
-              </span>
-            )}
-          </div>
-          {showCreatedAt && (
-            <DatePicker value={createdAt} onChange={setCreatedAt} />
-          )}
-        </div>
-
-        <div className="field">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <span className="field__label" style={{ margin: 0 }}>Notes · Markdown</span>
-            <button
-              type="button"
-              className="list__head-btn"
-              onClick={() => setShowPreview((v) => !v)}
-            >
-              {showPreview ? '隐藏预览' : '显示预览'}
-            </button>
-          </div>
-          {showPreview ? (
-            <div className="notes-editor">
-              <textarea
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="支持 Markdown · **粗体** *斜体* `代码` - 列表 > 引用"
+          {/* Tags + Repeat — side by side on desktop */}
+          <div className="edit__grid edit__grid--2">
+            <div className="edit__field">
+              <label className="edit__label">标签</label>
+              <input
+                className="edit__input"
+                value={tagsText}
+                onChange={(e) => setTagsText(e.target.value)}
+                placeholder="#工作 #学习"
               />
-              <div className="notes-editor__preview">
-                {notes.trim()
-                  ? <Markdown source={notes} />
-                  : <div className="notes-editor__preview-empty">预览</div>}
+              {tags.length > 0 && (
+                <div className="edit__tags-preview">
+                  {tags.map((t) => <span key={t} className="tag">#{t}</span>)}
+                </div>
+              )}
+            </div>
+
+            <div className="edit__field">
+              <label className="edit__label">重复</label>
+              <div className="edit__segmented">
+                {RECURRENCE_OPTS.map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    className="edit__seg-btn"
+                    aria-pressed={recurrence === opt.value}
+                    onClick={() => setRecurrence(opt.value)}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
               </div>
             </div>
-          ) : (
-            <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              rows={4}
-              style={{
-                padding: '10px 12px', borderRadius: 'var(--radius-soft)',
-                border: '1px solid var(--hairline-strong)', background: 'transparent',
-                outline: 'none', resize: 'vertical', color: 'var(--fg)',
-                fontFamily: 'var(--font-mono)', fontSize: 12.5,
-              }}
-              placeholder="支持 Markdown"
-            />
-          )}
+          </div>
+
+          {/* Deadline */}
+          <div className="edit__field">
+            <label className="edit__label">截止时间</label>
+            <div className="edit__picker-wrap">
+              <DatePicker value={deadline} onChange={setDeadline} />
+            </div>
+          </div>
+
+          {/* Created (collapsible) */}
+          <div className="edit__field">
+            <button
+              type="button"
+              className="edit__collapsible"
+              aria-expanded={showCreatedAt}
+              onClick={() => setShowCreatedAt((v) => !v)}
+            >
+              <span className="edit__collapsible-label">创建时间</span>
+              <span className="edit__collapsible-value">{formatAbsolute(createdAt)}</span>
+              <IconChevronDown
+                width={14} height={14}
+                style={{
+                  transform: showCreatedAt ? 'rotate(180deg)' : 'none',
+                  transition: 'transform 200ms',
+                  color: 'var(--fg-muted)',
+                }}
+              />
+            </button>
+            {showCreatedAt && (
+              <div className="edit__picker-wrap">
+                <DatePicker value={createdAt} onChange={setCreatedAt} />
+              </div>
+            )}
+          </div>
+
+          {/* Notes — Markdown editor with toggle preview */}
+          <div className="edit__field">
+            <div className="edit__notes-head">
+              <label className="edit__label">备注 · Markdown</label>
+              <button
+                type="button"
+                className="edit__notes-toggle"
+                aria-pressed={showPreview}
+                onClick={() => setShowPreview((v) => !v)}
+              >
+                {showPreview ? '隐藏预览' : '显示预览'}
+              </button>
+            </div>
+            {showPreview ? (
+              <div className="notes-editor">
+                <textarea
+                  className="edit__textarea"
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="**粗体** *斜体* `代码` - 列表 > 引用"
+                />
+                <div className="notes-editor__preview">
+                  {notes.trim()
+                    ? <Markdown source={notes} />
+                    : <div className="notes-editor__preview-empty">预览</div>}
+                </div>
+              </div>
+            ) : (
+              <textarea
+                className="edit__textarea"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                rows={4}
+                placeholder="支持 Markdown"
+              />
+            )}
+          </div>
+
         </div>
 
-        <div className="modal__actions">
-          <button className="btn" onClick={onClose}>取消</button>
-          <button className="btn btn--primary" onClick={save} disabled={!title.trim()}>保存</button>
-        </div>
+        <footer className="modal__footer">
+          <span className="modal__hint">⌘ + Enter 保存</span>
+          <div className="modal__footer-actions">
+            <button className="btn" onClick={onClose}>取消</button>
+            <button className="btn btn--primary" onClick={save} disabled={!title.trim()}>保存</button>
+          </div>
+        </footer>
       </div>
     </div>
   )

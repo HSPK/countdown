@@ -18,7 +18,7 @@
       /* Apply theme synchronously BEFORE first paint to avoid flash. */
       (function () {
         try {
-          var THEMES = ['mono-light', 'mono-dark', 'paper', 'cyberpunk'];
+          var THEMES = ['mono-light', 'mono-dark', 'paper', 'cyberpunk', 'flip'];
           var t = null;
           var sp = new URLSearchParams(location.search);
           var q = sp.get('theme');
@@ -44,7 +44,8 @@
             meta.setAttribute('content',
               t === 'mono-dark'  ? '#0A0A0A' :
               t === 'paper'      ? '#F2EAD6' :
-              t === 'cyberpunk'  ? '#080010' : '#FAFAFA');
+              t === 'cyberpunk'  ? '#080010' :
+              t === 'flip'       ? '#0E0B0A' : '#FAFAFA');
           }
         } catch (e) {}
       })();

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import { HomeTab } from './components/HomeTab'
 import { AllTab } from './components/AllTab'
 import { SettingsTab } from './components/SettingsTab'
@@ -19,7 +19,7 @@ import { seedIfEmpty } from './lib/seed'
 import { fetchSubscription } from './lib/portable'
 
 const ORDER: TabId[] = ['home', 'all', 'settings']
-const BUILTIN_THEMES = ['mono-light', 'mono-dark', 'paper', 'cyberpunk']
+const BUILTIN_THEMES = ['mono-light', 'mono-dark', 'paper', 'cyberpunk', 'flip']
 
 export default function App() {
   const theme = useSettings((s) => s.theme)
@@ -34,6 +34,19 @@ export default function App() {
 
   const composerRef = useRef<HTMLInputElement | null>(null)
   const mainRef = useRef<HTMLElement | null>(null)
+  /* Track previous tab so the inner pane can animate from the correct side
+     (slide-in-from-right when moving forward, from-left when moving back).
+     Mutating a ref during render is OK here — we only need the previous
+     value for visual direction; React state would lag by one paint. */
+  const prevTabRef = useRef<TabId>(tab)
+  const dir: 'fwd' | 'back' | 'init' = (() => {
+    const prev = prevTabRef.current
+    if (prev === tab) return 'init'
+    const pi = ORDER.indexOf(prev)
+    const ci = ORDER.indexOf(tab)
+    return ci > pi ? 'fwd' : 'back'
+  })()
+  prevTabRef.current = tab
 
   useEffect(() => { seedIfEmpty() }, [])
 
@@ -79,13 +92,18 @@ export default function App() {
   /* Desktop notifications — only when user has explicitly enabled in Settings */
   useNotifier(notifierEnabled)
 
-  /* Swipe to switch tabs */
-  const switchTab = (delta: number) => {
-    const i = ORDER.indexOf(tab)
-    const next = (i + delta + ORDER.length) % ORDER.length
-    setTab(ORDER[next])
-  }
-  useSwipe(mainRef, () => switchTab(+1), () => switchTab(-1))
+  /* Swipe to switch tabs. Memoized so useSwipe doesn't reattach on every
+     render. We read the current tab inside the callback to avoid stale
+     closures. */
+  const switchTab = useCallback((delta: number) => {
+    const cur = useSettings.getState().tab
+    const i = ORDER.indexOf(cur)
+    const j = (i + delta + ORDER.length) % ORDER.length
+    setTab(ORDER[j])
+  }, [setTab])
+  const onSwipeLeft  = useCallback(() => switchTab(+1), [switchTab])
+  const onSwipeRight = useCallback(() => switchTab(-1), [switchTab])
+  useSwipe(mainRef, onSwipeLeft, onSwipeRight)
 
   useHotkey('n', (e) => {
     e.preventDefault()
@@ -105,10 +123,15 @@ export default function App() {
       {theme === 'cyberpunk' && <CyberpunkBg />}
       {theme === 'paper' && <PaperBg />}
 
-      <main className="app__main" ref={mainRef} key={tab}>
-        {tab === 'home' && <HomeTab />}
-        {tab === 'all' && <AllTab />}
-        {tab === 'settings' && <SettingsTab />}
+      {/* The ref'd <main> stays mounted across tab changes so swipe
+          listeners persist and iOS doesn't lose the tap after a swipe.
+          The inner pane is keyed so the slide-in animation still runs. */}
+      <main className="app__main" ref={mainRef}>
+        <div className="app__pane" data-dir={dir} key={tab}>
+          {tab === 'home' && <HomeTab />}
+          {tab === 'all' && <AllTab />}
+          {tab === 'settings' && <SettingsTab />}
+        </div>
       </main>
 
       <div className="dock">

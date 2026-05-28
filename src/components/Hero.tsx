@@ -21,7 +21,7 @@ export function Hero() {
   const { sign, d, h, m, s } = diffParts(remaining)
 
   return (
-    <section className="hero" aria-label="下一个截止" data-urgency={u}>
+    <section className="hero" aria-label="下一个截止" data-urgency={u} data-overdue={overdue}>
       <div className="hero__label">{overdue ? 'Overdue' : 'Next'}</div>
       <h1 className="hero__title">{next.title}</h1>
 

@@ -87,25 +87,41 @@ export function TodoRow({ todo, onEdit, showSource }: Props) {
       </div>
 
       <div className="row__main">
-        <div className="row__title">{todo.title}</div>
-        <div className="row__sub">
+        <div className="row__title-wrap">
           {todo.pinned && (
-            <span className="row__pin" aria-label="已置顶"><IconStarFill width={11} height={11} /></span>
+            <span className="row__title-icon" aria-label="已置顶" title="已置顶">
+              <IconStarFill width={12} height={12} />
+            </span>
           )}
           {todo.recurrence && todo.recurrence !== 'none' && (
-            <span className="row__pin" aria-label="重复任务" title={`重复 · ${RECURRENCE_LABEL[todo.recurrence]}`}>
-              <IconRepeat width={11} height={11} />
+            <span className="row__title-icon" aria-label="重复任务" title={`重复 · ${RECURRENCE_LABEL[todo.recurrence]}`}>
+              <IconRepeat width={12} height={12} />
             </span>
           )}
+          <span className="row__title">{todo.title}</span>
+        </div>
+        <div className="row__sub">
           <span>{formatHM(todo.deadline)}</span>
+          {todo.recurrence && todo.recurrence !== 'none' && (
+            <>
+              <span className="row__sub-sep" aria-hidden>·</span>
+              <span>{RECURRENCE_LABEL[todo.recurrence]}</span>
+            </>
+          )}
           {todo.tags.length > 0 && (
-            <span className="row__sub-tags">
-              {todo.tags.slice(0, 3).map((t) => <span key={t} className="tag">#{t}</span>)}
-              {todo.tags.length > 3 && <span className="tag" style={{ opacity: 0.7 }}>+{todo.tags.length - 3}</span>}
-            </span>
+            <>
+              <span className="row__sub-sep" aria-hidden>·</span>
+              <span className="row__sub-tags">
+                {todo.tags.slice(0, 3).map((t) => <span key={t} className="tag">#{t}</span>)}
+                {todo.tags.length > 3 && <span className="tag" style={{ opacity: 0.7 }}>+{todo.tags.length - 3}</span>}
+              </span>
+            </>
           )}
           {showSource && source && source.id !== 'local' && (
-            <span className="src" title={source.url}>{source.name}</span>
+            <>
+              <span className="row__sub-sep" aria-hidden>·</span>
+              <span className="src" title={source.url}>{source.name}</span>
+            </>
           )}
         </div>
       </div>

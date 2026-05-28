@@ -235,15 +235,26 @@ kbd {
 .hero__digits {
   display: flex;
   align-items: baseline;
-  gap: clamp(10px, 1.6vw, 22px);
-  flex-wrap: wrap;
+  gap: clamp(8px, 1.4vw, 22px);
+  /* No wrap — the digits row must stay on one line even when the `+`
+     sign is shown for overdue countdowns. Clamp + tighter min-font on
+     narrow screens ensures it actually fits. */
+  flex-wrap: nowrap;
+  min-width: 0;
   font-family: var(--font-digits);
   font-weight: var(--digit-weight);
-  font-size: clamp(56px, 9vw, 112px);
+  font-size: clamp(44px, 8.6vw, 112px);
   line-height: .92;
   letter-spacing: var(--digit-tracking);
   font-variant-numeric: tabular-nums;
   color: var(--fg);
+}
+/* When the row gets a leading `+` sign, leave the per-segment label space
+   alone but shave a bit off the digits so it still fits without overflow
+   on phones. */
+.hero[data-overdue="true"] .hero__digits {
+  font-size: clamp(40px, 7.6vw, 96px);
+  gap: clamp(6px, 1.2vw, 18px);
 }
 [data-theme="cyberpunk"] .hero__digits { color: var(--accent); }
 .hero[data-urgency="critical"] .hero__digits,
@@ -600,7 +611,21 @@ kbd {
 [data-theme="cyberpunk"] .row__time--critical,
 [data-theme="cyberpunk"] .row__time--overdue  { color: var(--u-critical); }
 
-.row__main { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.row__main { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.row__title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+.row__title-icon {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  color: var(--accent);
+  opacity: .9;
+}
+[data-theme="cyberpunk"] .row__title-icon { color: var(--accent); text-shadow: 0 0 6px var(--accent); }
 .row__title {
   font-family: var(--font-display);
   font-weight: 500;
@@ -609,6 +634,8 @@ kbd {
   line-height: 1.3;
   letter-spacing: -0.01em;
   margin: 0;
+  min-width: 0;
+  flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -622,7 +649,15 @@ kbd {
   color: var(--fg-muted);
   letter-spacing: 0;
   font-variant-numeric: tabular-nums;
-  display: flex; align-items: center; gap: 8px;
+  display: flex; align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  row-gap: 4px;
+  min-width: 0;
+}
+.row__sub-sep {
+  opacity: .45;
+  user-select: none;
 }
 .row__pin { color: var(--accent); }
 [data-theme="cyberpunk"] .row__pin { color: var(--accent); text-shadow: 0 0 8px var(--accent); }
@@ -1710,7 +1745,11 @@ kbd {
 /* ─── Edit modal · sticky header / scrollable body / sticky footer ─── */
 .modal--edit {
   width: min(620px, 100%);
-  max-height: min(86dvh, 820px);
+  /* The backdrop is `display: flex` with safe-area + 20px padding on every
+     side. `max-height: 100%` here means 100% of the backdrop's content
+     box (already minus padding), so the modal never overflows even when
+     iOS notch / home indicator add extra safe-area-insets. */
+  max-height: 100%;
   padding: 0;
   gap: 0;
   border-radius: 14px;
@@ -1946,7 +1985,6 @@ kbd {
 
 @media (max-width: 540px) {
   .modal--edit {
-    max-height: 92dvh;
     border-radius: 12px;
   }
   .modal__header,

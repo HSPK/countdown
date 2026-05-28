@@ -1,0 +1,117 @@
+/* =============================================================
+   Tokens · 4 themes
+     mono-light · mono-dark · paper · cyberpunk
+   Editorial typography first, single accent, hairline borders.
+   ============================================================= */
+
+:root, [data-theme="mono-light"] {
+  --bg:           #FAFAFA;
+  --bg-2:         #F3F3F3;
+  --bg-overlay:   rgba(250, 250, 250, 0.92);
+  --bg-popover:   #FFFFFF;
+  --fg:           #0A0A0A;
+  --fg-2:         #5C5C5C;
+  --fg-muted:     #A8A8A8;
+  --hairline:     rgba(0, 0, 0, 0.08);
+  --hairline-strong: rgba(0, 0, 0, 0.22);
+  --accent:       #0A0A0A;
+  --on-accent:    #FAFAFA;
+
+  --u-soon:       #B8731E;
+  --u-critical:   #C8392F;
+  --u-overdue:    #A8A8A8;
+  --u-done:       #B8B8B8;
+
+  --radius:       0px;
+  --radius-soft:  6px;
+
+  --font-sans:    'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-serif:   'Fraunces', Georgia, 'Times New Roman', serif;
+  --font-mono:    'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --font-display: var(--font-sans);
+  --font-body:    var(--font-sans);
+  --font-digits:  var(--font-sans);
+  --digit-weight: 700;
+  --digit-tracking: -0.055em;
+
+  --dur-fast:     120ms;
+  --dur-med:      220ms;
+  --ease:         cubic-bezier(.2, .8, .2, 1);
+
+  color-scheme: light;
+}
+
+[data-theme="mono-dark"] {
+  --bg:           #0A0A0A;
+  --bg-2:         #161616;
+  --bg-overlay:   rgba(10, 10, 10, 0.92);
+  --bg-popover:   #1A1A1A;
+  --fg:           #F5F5F5;
+  --fg-2:         #B8B8B8;
+  --fg-muted:     #6B6B6B;
+  --hairline:     rgba(255, 255, 255, 0.08);
+  --hairline-strong: rgba(255, 255, 255, 0.22);
+  --accent:       #F5F5F5;
+  --on-accent:    #0A0A0A;
+
+  --u-soon:       #E5A24B;
+  --u-critical:   #FF6B6B;
+  --u-overdue:    #6B6B6B;
+  --u-done:       #5A5A5A;
+
+  color-scheme: dark;
+}
+
+[data-theme="paper"] {
+  --bg:           #F2EAD6;
+  --bg-2:         #E9DEC0;
+  --bg-overlay:   rgba(242, 234, 214, 0.94);
+  --bg-popover:   #FBF6E8;
+  --fg:           #2A1F12;
+  --fg-2:         #5C4732;
+  --fg-muted:     #9B8A6E;
+  --hairline:     rgba(80, 50, 20, 0.16);
+  --hairline-strong: rgba(80, 50, 20, 0.32);
+  --accent:       #B33A3A;
+  --on-accent:    #FBF6E8;
+
+  --u-soon:       #C57A1F;
+  --u-critical:   #B33A3A;
+  --u-overdue:    #9B8A6E;
+  --u-done:       #9B8A6E;
+
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-body:    'Fraunces', Georgia, serif;
+  --font-digits:  'Fraunces', Georgia, serif;
+  --digit-weight: 600;
+  --digit-tracking: -0.025em;
+
+  color-scheme: light;
+}
+
+[data-theme="cyberpunk"] {
+  --bg:           #07000F;
+  --bg-2:         #0D041A;
+  --bg-overlay:   rgba(7, 0, 15, 0.94);
+  --bg-popover:   #100525;
+  --fg:           #E8E8FF;
+  --fg-2:         #9A8FBA;
+  --fg-muted:     #4A3F5C;
+  --hairline:     rgba(0, 240, 255, 0.16);
+  --hairline-strong: rgba(0, 240, 255, 0.45);
+  --accent:       #00F0FF;
+  --on-accent:    #07000F;
+
+  --u-soon:       #FFEC3D;
+  --u-critical:   #FF2A6D;
+  --u-overdue:    #4A3F5C;
+  --u-done:       #4A3F5C;
+
+  --font-display: 'Share Tech Mono', ui-monospace, monospace;
+  --font-body:    'Space Grotesk', 'Inter', system-ui, sans-serif;
+  --font-digits:  'Share Tech Mono', ui-monospace, monospace;
+  --digit-weight: 400;
+  --digit-tracking: 0.02em;
+
+  color-scheme: dark;
+}

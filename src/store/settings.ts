@@ -1,0 +1,74 @@
+import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
+
+export type ThemeName = 'mono-light' | 'mono-dark' | 'paper' | 'cyberpunk'
+export type TabId = 'home' | 'all' | 'settings'
+
+export interface ThemeMeta {
+  id: ThemeName
+  name: string
+  hint: string
+}
+
+export const THEMES: ThemeMeta[] = [
+  { id: 'mono-light', name: 'Mono Light', hint: 'SANS · LIGHT' },
+  { id: 'mono-dark',  name: 'Mono Dark',  hint: 'SANS · DARK'  },
+  { id: 'paper',      name: 'Paper',      hint: 'serif'        },
+  { id: 'cyberpunk',  name: 'Cyberpunk',  hint: 'NEON · MONO'  },
+]
+
+interface SettingsState {
+  theme: ThemeName
+  tab: TabId
+  focusId: string | null
+  helpSection: string | null
+  setTheme: (t: ThemeName) => void
+  cycleTheme: () => void
+  setTab: (t: TabId) => void
+  setFocus: (id: string | null) => void
+  setHelp: (section: string | null) => void
+}
+
+export const useSettings = create<SettingsState>()(
+  persist(
+    (set, get) => ({
+      theme: 'mono-light',
+      tab: 'home',
+      focusId: null,
+      helpSection: null,
+      setTheme: (t) => set({ theme: t }),
+      cycleTheme: () => {
+        const order = THEMES.map((t) => t.id)
+        const i = order.indexOf(get().theme)
+        set({ theme: order[(i + 1) % order.length] })
+      },
+      setTab: (t) => set({ tab: t }),
+      setFocus: (id) => set({ focusId: id }),
+      setHelp: (s) => set({ helpSection: s }),
+    }),
+    {
+      name: 'countdown.settings.v1',
+      partialize: (s) => ({ theme: s.theme, tab: s.tab }),
+      version: 4,
+      migrate: (persistedState: unknown) => {
+        const s = persistedState as { theme?: string; tab?: string } | null
+        const map: Record<string, ThemeName> = {
+          'aurora':  'mono-dark',
+          'minimal': 'mono-light',
+        }
+        let theme: ThemeName = 'mono-light'
+        if (s?.theme) {
+          const mapped = map[s.theme] || s.theme
+          const valid: ThemeName[] = ['mono-light', 'mono-dark', 'paper', 'cyberpunk']
+          if (valid.includes(mapped as ThemeName)) theme = mapped as ThemeName
+        }
+        const validTabs: TabId[] = ['home', 'all', 'settings']
+        const tab: TabId = (s?.tab && validTabs.includes(s.tab as TabId)) ? (s.tab as TabId) : 'home'
+        return { theme, tab }
+      },
+    },
+  ),
+)
+
+
+

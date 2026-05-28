@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { solarToLunar, formatLunar } from '../lib/lunar'
 import { pad } from '../lib/time'
+import { useT } from '../lib/i18n'
 
 /* iOS-style wheel picker. Two rows: Year · Month · Day, then Hour · Min.
    Each column is a vertical scroll container with snap. We track the
@@ -142,6 +143,7 @@ function Column({ items, value, onChange, ariaLabel }: ColumnProps) {
 
 export function WheelPicker({ value, onChange }: Props) {
   const date = useMemo(() => new Date(value), [value])
+  const t = useT()
   const Y = date.getFullYear()
   const M = date.getMonth() + 1
   const D = date.getDate()
@@ -202,22 +204,22 @@ export function WheelPicker({ value, onChange }: Props) {
   const lunar = useMemo(() => solarToLunar(Y, M, D), [Y, M, D])
 
   return (
-    <div className="wp" role="group" aria-label="日期与时间">
+    <div className="wp" role="group" aria-label={t('edit.deadline')}>
       <div className="wp-row wp-row--date">
-        <Column items={years}  value={Y}  onChange={(v) => setPart({ y: v })}  ariaLabel="年" />
-        <Column items={months} value={M}  onChange={(v) => setPart({ m: v })}  ariaLabel="月" />
-        <Column items={days}   value={D}  onChange={(v) => setPart({ d: v })}  ariaLabel="日" />
+        <Column items={years}  value={Y}  onChange={(v) => setPart({ y: v })}  ariaLabel={t('picker.year')} />
+        <Column items={months} value={M}  onChange={(v) => setPart({ m: v })}  ariaLabel={t('picker.month')} />
+        <Column items={days}   value={D}  onChange={(v) => setPart({ d: v })}  ariaLabel={t('picker.day')} />
         <div className="wp-band" aria-hidden />
       </div>
 
       <div className="wp-row wp-row--time">
-        <Column items={hours} value={H}  onChange={(v) => setPart({ h: v })}  ariaLabel="时" />
+        <Column items={hours} value={H}  onChange={(v) => setPart({ h: v })}  ariaLabel={t('picker.hour')} />
         <span className="wp-sep" aria-hidden>:</span>
-        <Column items={mins}  value={Mi} onChange={(v) => setPart({ mi: v })} ariaLabel="分" />
+        <Column items={mins}  value={Mi} onChange={(v) => setPart({ mi: v })} ariaLabel={t('picker.min')} />
         <div className="wp-band" aria-hidden />
       </div>
 
-      <div className="wp-lunar" aria-label="农历日期">
+      <div className="wp-lunar" aria-label={t('common.lunar')}>
         {lunar ? formatLunar(lunar) : ' '}
       </div>
     </div>

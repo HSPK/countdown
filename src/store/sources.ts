@@ -32,7 +32,7 @@ interface SourcesState {
 const DEFAULT_LOCAL: Source = {
   id: LOCAL_SOURCE_ID,
   type: 'local',
-  name: '本地',
+  name: 'Local',
   enabled: true,
   status: 'idle',
 }

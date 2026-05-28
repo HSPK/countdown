@@ -49,15 +49,15 @@ export const useCustomThemes = create<CustomThemesState>()(
  *  a string→string map). Throws on hard failure. */
 export function parseThemeJson(raw: string): ThemeFile {
   let data: unknown
-  try { data = JSON.parse(raw) } catch { throw new Error('JSON 解析失败') }
-  if (!data || typeof data !== 'object') throw new Error('期望对象 { name, tokens }')
+  try { data = JSON.parse(raw) } catch { throw new Error('JSON parse failed') }
+  if (!data || typeof data !== 'object') throw new Error('Expected object { name, tokens }')
   const obj = data as Record<string, unknown>
-  const name = typeof obj.name === 'string' ? obj.name : '未命名主题'
+  const name = typeof obj.name === 'string' ? obj.name : 'Untitled theme'
   const id = typeof obj.id === 'string' && obj.id ? obj.id : ''
   const hint = typeof obj.hint === 'string' ? obj.hint : undefined
   const base = typeof obj.base === 'string' ? obj.base as ThemeFile['base'] : undefined
   const t = obj.tokens
-  if (!t || typeof t !== 'object') throw new Error('tokens 字段缺失')
+  if (!t || typeof t !== 'object') throw new Error('Missing `tokens` field')
   const tokens: Record<string, string> = {}
   for (const [k, v] of Object.entries(t as Record<string, unknown>)) {
     if (typeof v !== 'string') continue

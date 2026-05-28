@@ -1,17 +1,20 @@
 /* Quick deadline presets. Each preset declares either a relative offset
-   (resolved at SUBMIT time, so "10 分" always means 10 mins from add)
-   or an absolute resolver (e.g. 今晚 22:00). */
+   (resolved at SUBMIT time, so "10m" always means 10 minutes from add)
+   or an absolute resolver (e.g. "Tonight" → 22:00 local). Labels are
+   i18n keys; rendering layer resolves them via useT(). */
 
 export interface RelativePreset {
   id: string
   kind: 'relative'
-  label: string
+  /** i18n key for the chip label (e.g. 'preset.rel.5m') */
+  labelKey: string
   offsetMs: number
 }
 export interface AbsolutePreset {
   id: string
   kind: 'absolute'
-  label: string
+  /** i18n key for the chip label (e.g. 'preset.abs.tonight') */
+  labelKey: string
   resolve: (now: Date) => Date
 }
 export type Preset = RelativePreset | AbsolutePreset
@@ -25,19 +28,19 @@ const MIN = 60_000
 const HOUR = 60 * MIN
 
 export const RELATIVE_PRESETS: RelativePreset[] = [
-  { id: '5min',  kind: 'relative', label: '5 分',  offsetMs:  5 * MIN },
-  { id: '10min', kind: 'relative', label: '10 分', offsetMs: 10 * MIN },
-  { id: '20min', kind: 'relative', label: '20 分', offsetMs: 20 * MIN },
-  { id: '30min', kind: 'relative', label: '30 分', offsetMs: 30 * MIN },
-  { id: '1h',    kind: 'relative', label: '1 时',  offsetMs:  1 * HOUR },
-  { id: '2h',    kind: 'relative', label: '2 时',  offsetMs:  2 * HOUR },
+  { id: '5min',  kind: 'relative', labelKey: 'preset.rel.5m',  offsetMs:  5 * MIN },
+  { id: '10min', kind: 'relative', labelKey: 'preset.rel.10m', offsetMs: 10 * MIN },
+  { id: '20min', kind: 'relative', labelKey: 'preset.rel.20m', offsetMs: 20 * MIN },
+  { id: '30min', kind: 'relative', labelKey: 'preset.rel.30m', offsetMs: 30 * MIN },
+  { id: '1h',    kind: 'relative', labelKey: 'preset.rel.1h',  offsetMs:  1 * HOUR },
+  { id: '2h',    kind: 'relative', labelKey: 'preset.rel.2h',  offsetMs:  2 * HOUR },
 ]
 
 export const ABSOLUTE_PRESETS: AbsolutePreset[] = [
   {
     id: 'tonight',
     kind: 'absolute',
-    label: '今晚',
+    labelKey: 'preset.abs.tonight',
     resolve: (now) => {
       const d = new Date(now)
       const h = d.getHours()
@@ -47,7 +50,7 @@ export const ABSOLUTE_PRESETS: AbsolutePreset[] = [
   {
     id: 'tomorrow-am',
     kind: 'absolute',
-    label: '明早',
+    labelKey: 'preset.abs.tomorrow_am',
     resolve: (now) => {
       const d = new Date(now)
       d.setDate(d.getDate() + 1)
@@ -57,7 +60,7 @@ export const ABSOLUTE_PRESETS: AbsolutePreset[] = [
   {
     id: 'tomorrow-pm',
     kind: 'absolute',
-    label: '明晚',
+    labelKey: 'preset.abs.tomorrow_pm',
     resolve: (now) => {
       const d = new Date(now)
       d.setDate(d.getDate() + 1)
@@ -67,7 +70,7 @@ export const ABSOLUTE_PRESETS: AbsolutePreset[] = [
   {
     id: 'weekend',
     kind: 'absolute',
-    label: '周末',
+    labelKey: 'preset.abs.weekend',
     resolve: (now) => {
       const d = new Date(now)
       const dow = d.getDay()
@@ -79,7 +82,7 @@ export const ABSOLUTE_PRESETS: AbsolutePreset[] = [
   {
     id: 'next-week',
     kind: 'absolute',
-    label: '下周一',
+    labelKey: 'preset.abs.next_week',
     resolve: (now) => {
       const d = new Date(now)
       const dow = d.getDay()
@@ -100,5 +103,6 @@ export const TIME_PRESETS = [
   { h: 18, m: 0  },
   { h: 21, m: 0  },
 ]
+
 
 

@@ -3,16 +3,18 @@ import { useSources, LOCAL_SOURCE_ID, type Source } from '../store/sources'
 import { useTodos } from '../store/todos'
 import { fetchSubscription } from '../lib/portable'
 import { formatAbsolute } from '../lib/time'
+import { useT } from '../lib/i18n'
 import { IconTrash, IconPlus, IconX } from './Icons'
 
 export function SourceManager() {
   const sources = useSources((s) => s.sources)
-  const localCount = useTodos((s) => s.todos.filter((t) => t.sourceId === LOCAL_SOURCE_ID).length)
+  const localCount = useTodos((s) => s.todos.filter((todo) => todo.sourceId === LOCAL_SOURCE_ID).length)
   const counts = useTodos((s) => {
     const m = new Map<string, number>()
-    for (const t of s.todos) m.set(t.sourceId, (m.get(t.sourceId) ?? 0) + 1)
+    for (const todo of s.todos) m.set(todo.sourceId, (m.get(todo.sourceId) ?? 0) + 1)
     return m
   })
+  const t = useT()
 
   const remove = useSources((s) => s.remove)
   const toggle = useSources((s) => s.toggle)
@@ -51,17 +53,17 @@ export function SourceManager() {
               <div className="source-row__name">
                 {s.name}
                 <span style={{ marginLeft: 10, color: 'var(--fg-muted)', fontFamily: 'var(--font-mono)', fontSize: 11 }}>
-                  {count} 项
+                  {t('sources.count', { count })}
                 </span>
               </div>
               <div className="source-row__meta">
                 {s.type === 'local'
-                  ? '本机存储 · localStorage'
+                  ? t('sources.local.storage')
                   : <>
                       {s.url}
-                      {s.lastFetched && <> · 最近同步 {formatAbsolute(s.lastFetched)}</>}
+                      {s.lastFetched && <> · {t('sources.last.ok', { time: formatAbsolute(s.lastFetched) })}</>}
                       {s.status === 'error' && s.lastError && (
-                        <span style={{ color: 'var(--u-critical)' }}> · 错误: {s.lastError}</span>
+                        <span style={{ color: 'var(--u-critical)' }}> · {t('sources.last.error', { error: s.lastError })}</span>
                       )}
                     </>}
               </div>
@@ -71,27 +73,27 @@ export function SourceManager() {
                 <>
                   <button
                     className="source-row__btn"
-                    title={s.enabled ? '停用' : '启用'}
+                    title={s.enabled ? t('sources.disable') : t('sources.enable')}
                     onClick={() => toggle(s.id)}
-                    aria-label="启用切换"
+                    aria-label={t('sources.toggle')}
                   >
                     {s.enabled ? '○' : '●'}
                   </button>
                   <button
                     className="source-row__btn"
-                    title="立即同步"
+                    title={t('sources.refresh.now')}
                     onClick={() => refresh(s)}
                     disabled={s.status === 'fetching'}
-                    aria-label="同步"
+                    aria-label={t('sources.refresh')}
                   >
                     <RefreshIcon spinning={s.status === 'fetching'} />
                   </button>
                   <button
                     className="source-row__btn source-row__btn--danger"
-                    title="移除订阅"
-                    aria-label="移除"
+                    title={t('sources.delete')}
+                    aria-label={t('sources.delete')}
                     onClick={() => {
-                      if (confirm(`移除订阅源「${s.name}」？将同时删除其 ${count} 条任务。`)) {
+                      if (confirm(t('sources.delete.confirm', { name: s.name, count }))) {
                         dropSource(s.id)
                         remove(s.id)
                       }
@@ -109,7 +111,7 @@ export function SourceManager() {
       <div style={{ paddingTop: 12 }}>
         <button className="btn" onClick={() => setAdding(true)}>
           <IconPlus width={14} height={14} style={{ marginRight: 6, verticalAlign: '-2px' }} />
-          添加订阅源
+          {t('sources.add')}
         </button>
       </div>
 
@@ -135,6 +137,7 @@ function RefreshIcon({ spinning }: { spinning: boolean }) {
 
 function AddSourceModal({ onClose, onAdded }: { onClose: () => void; onAdded: (id: string) => void }) {
   const addUrl = useSources((s) => s.addUrl)
+  const t = useT()
   const [name, setName] = useState('')
   const [url, setUrl] = useState('')
 
@@ -146,7 +149,7 @@ function AddSourceModal({ onClose, onAdded }: { onClose: () => void; onAdded: (i
 
   const submit = () => {
     if (!url.trim()) return
-    try { new URL(url.trim()) } catch { alert('请输入有效的 URL'); return }
+    try { new URL(url.trim()) } catch { alert(t('sources.add.url.invalid')); return }
     const id = addUrl({ name: name.trim() || url.trim(), url: url.trim() })
     onClose()
     onAdded(id)
@@ -161,42 +164,42 @@ function AddSourceModal({ onClose, onAdded }: { onClose: () => void; onAdded: (i
     >
       <div className="modal modal--wide">
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div className="modal__title" style={{ flex: 1 }}>添加订阅源</div>
-          <button className="row__action" onClick={onClose} aria-label="关闭"><IconX /></button>
+          <div className="modal__title" style={{ flex: 1 }}>{t('sources.add.title')}</div>
+          <button className="row__action" onClick={onClose} aria-label={t('edit.close')}><IconX /></button>
         </div>
 
         <div className="field">
-          <span className="field__label">名称（可选）</span>
-          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="例如 期末备考清单" autoFocus />
+          <span className="field__label">{t('sources.add.name')}</span>
+          <input value={name} onChange={(e) => setName(e.target.value)} placeholder={t('sources.add.name.hint')} autoFocus />
         </div>
 
         <div className="field">
-          <span className="field__label">URL</span>
+          <span className="field__label">{t('sources.url.label')}</span>
           <input
             value={url} onChange={(e) => setUrl(e.target.value)}
-            placeholder="https://example.com/countdown.json"
+            placeholder={t('sources.add.url.hint')}
             type="url"
           />
         </div>
 
         <div style={{ fontSize: 12, color: 'var(--fg-muted)', lineHeight: 1.55 }}>
-          支持的 JSON 结构：
+          {t('sources.add.json')}
           <pre style={{
             margin: '6px 0 0', padding: '8px 10px', borderRadius: 6,
             background: 'var(--bg-2)', fontSize: 11, overflow: 'auto', fontFamily: 'var(--font-mono)',
           }}>
 {`{ "todos": [
-  { "id": "x1", "title": "项目截止",
+  { "id": "x1", "title": "Project deadline",
     "deadline": "2026-06-01T18:00:00Z",
-    "tags": ["工作"], "notes": "**注意** ..." }
+    "tags": ["work"], "notes": "**note** ..." }
 ]}`}
           </pre>
-          需要目标服务器开启 CORS。
+          {t('sources.add.cors')}
         </div>
 
         <div className="modal__actions">
-          <button className="btn" onClick={onClose}>取消</button>
-          <button className="btn btn--primary" onClick={submit} disabled={!url.trim()}>添加并同步</button>
+          <button className="btn" onClick={onClose}>{t('edit.cancel')}</button>
+          <button className="btn btn--primary" onClick={submit} disabled={!url.trim()}>{t('sources.add.submit')}</button>
         </div>
       </div>
     </div>

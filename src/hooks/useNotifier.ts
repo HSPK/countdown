@@ -19,9 +19,9 @@ function saveNotified(m: NotifiedMap): void {
 interface Threshold { id: string; ms: number; label: string }
 
 const THRESHOLDS: Threshold[] = [
-  { id: '1h',  ms: 60 * 60 * 1000, label: '还有 1 小时' },
-  { id: '10m', ms: 10 * 60 * 1000, label: '还有 10 分钟' },
-  { id: '0',   ms: 0,              label: '已到截止时间' },
+  { id: '1h',  ms: 60 * 60 * 1000, label: '1 hour left' },
+  { id: '10m', ms: 10 * 60 * 1000, label: '10 minutes left' },
+  { id: '0',   ms: 0,              label: 'Due now' },
 ]
 
 function notify(title: string, body: string, tag: string): void {

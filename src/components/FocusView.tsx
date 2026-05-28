@@ -3,6 +3,7 @@ import { useTodos } from '../store/todos'
 import { useSettings } from '../store/settings'
 import { useSources } from '../store/sources'
 import { useNowFast } from '../hooks/useNow'
+import { useT } from '../lib/i18n'
 import { diffParts, formatAbsolute, pad, progressPct, urgencyOf } from '../lib/time'
 import { IconX, IconMaximize, IconMinimize } from './Icons'
 
@@ -30,6 +31,7 @@ export function FocusView() {
   const todo = useTodos((s) => s.todos.find((t) => t.id === focusId))
   const source = useSources((s) => s.sources.find((x) => x.id === todo?.sourceId))
   const now = useNowFast(!!focusId)
+  const t = useT()
   const [idle, setIdle] = useState(false)
   const [fs, setFs] = useState(false)
   const [forceRotate, setForceRotate] = useState(false)
@@ -204,20 +206,20 @@ export function FocusView() {
       <div className="focus__bg" aria-hidden />
 
       <div className="focus__chrome focus__top">
-        <span className="focus__crumb">{source && source.id !== 'local' ? source.name : '本地'}</span>
+        <span className="focus__crumb">{source && source.id !== 'local' ? source.name : t('focus.local')}</span>
         <span className="focus__top-spacer" />
         <button
           className="focus__top-btn"
-          aria-label={fs ? '退出浏览器全屏' : '浏览器全屏'}
-          title={fs ? '退出浏览器全屏 (F11)' : '进入浏览器全屏 (F11)'}
+          aria-label={fs ? t('focus.unfullscreen') : t('focus.fullscreen')}
+          title={fs ? t('focus.unfullscreen.hint') : t('focus.fullscreen.hint')}
           onClick={toggleBrowserFs}
         >
           {fs ? <IconMinimize /> : <IconMaximize />}
         </button>
         <button
           className="focus__top-btn"
-          aria-label="关闭"
-          title="关闭 (Esc)"
+          aria-label={t('focus.close')}
+          title={t('focus.close.hint')}
           onClick={() => setFocus(null)}
         >
           <IconX />
@@ -232,8 +234,8 @@ export function FocusView() {
           {overdue && (
             <span
               className="focus__sign"
-              aria-label="已超时"
-              title="已超时"
+              aria-label={t('focus.overdue')}
+              title={t('focus.overdue')}
             >+</span>
           )}
           <div
@@ -243,13 +245,13 @@ export function FocusView() {
             }
             aria-live="off"
           >
-            <Digits value={pad(d)} label="Days" />
+            <Digits value={pad(d)} label={t('focus.label.days')} />
             <span className="focus__sep" aria-hidden>:</span>
-            <Digits value={pad(h)} label="Hours" />
+            <Digits value={pad(h)} label={t('focus.label.hours')} />
             <span className="focus__sep" aria-hidden>:</span>
-            <Digits value={pad(m)} label="Min" />
+            <Digits value={pad(m)} label={t('focus.label.min')} />
             <span className="focus__sep" aria-hidden>:</span>
-            <Digits value={pad(s)} label="Sec" />
+            <Digits value={pad(s)} label={t('focus.label.sec')} />
           </div>
         </div>
 
@@ -263,10 +265,10 @@ export function FocusView() {
         </div>
 
         <div className="focus__chrome focus__meta">
-          截止 {formatAbsolute(todo.deadline)}
+          {t('focus.due', { at: formatAbsolute(todo.deadline) })}
           {todo.tags.length > 0 && (
             <span style={{ marginLeft: 14, display: 'inline-flex', gap: 4 }}>
-              {todo.tags.map((t) => <span key={t} className="tag">#{t}</span>)}
+              {todo.tags.map((tag) => <span key={tag} className="tag">#{tag}</span>)}
             </span>
           )}
         </div>

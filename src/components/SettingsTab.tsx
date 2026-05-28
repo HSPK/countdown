@@ -6,14 +6,19 @@ import { SourceManager } from './SourceManager'
 import { downloadJson, makeExportPayload, parseTodosJson, readFileAsText } from '../lib/portable'
 import { requestNotificationPermission } from '../hooks/useNotifier'
 import { LOCAL_SOURCE_ID } from '../store/sources'
+import { useT, LANGS, type Lang } from '../lib/i18n'
 import {
   IconCheck, IconTrash, IconBell, IconDownload, IconUpload,
   IconTv, IconHelp, IconChevronRight, IconExternal,
 } from './Icons'
 
+const APP_VERSION = '0.25'
+
 export function SettingsTab() {
   const theme = useSettings((s) => s.theme)
   const setTheme = useSettings((s) => s.setTheme)
+  const lang = useSettings((s) => s.lang)
+  const setLang = useSettings((s) => s.setLang)
   const setHelp = useSettings((s) => s.setHelp)
   const todos = useTodos((s) => s.todos)
   const importTodos = useTodos((s) => s.importTodos)
@@ -22,6 +27,7 @@ export function SettingsTab() {
   const addTheme = useCustomThemes((s) => s.addTheme)
   const notifier = useCustomThemes((s) => s.notifier)
   const setNotifier = useCustomThemes((s) => s.setNotifier)
+  const t = useT()
 
   const fileRef = useRef<HTMLInputElement>(null)
   const themeFileRef = useRef<HTMLInputElement>(null)
@@ -29,8 +35,8 @@ export function SettingsTab() {
 
   /* -- Data import / export -- */
   const exportLocal = () => {
-    const local = todos.filter((t) => t.sourceId === LOCAL_SOURCE_ID)
-    const payload = makeExportPayload(local, '本地导出')
+    const local = todos.filter((todo) => todo.sourceId === LOCAL_SOURCE_ID)
+    const payload = makeExportPayload(local, 'Local export')
     const stamp = new Date().toISOString().slice(0, 10)
     downloadJson(payload, `countdown-${stamp}.json`)
   }
@@ -39,9 +45,9 @@ export function SettingsTab() {
       const text = await readFileAsText(file)
       const items = parseTodosJson(text, LOCAL_SOURCE_ID)
       const n = importTodos(items)
-      alert(`已导入 ${n} 个任务`)
+      alert(t('settings.io.import.done', { count: n }))
     } catch (e) {
-      alert('导入失败：' + (e instanceof Error ? e.message : String(e)))
+      alert(t('settings.io.import.fail', { error: e instanceof Error ? e.message : String(e) }))
     }
   }
 
@@ -49,10 +55,10 @@ export function SettingsTab() {
   const importThemeFile = async (file: File) => {
     try {
       const text = await readFileAsText(file)
-      const t = parseThemeJson(text)
-      addTheme(t)
+      const theme_ = parseThemeJson(text)
+      addTheme(theme_)
     } catch (e) {
-      alert('主题导入失败：' + (e instanceof Error ? e.message : String(e)))
+      alert(t('settings.io.theme.fail', { error: e instanceof Error ? e.message : String(e) }))
     }
   }
 
@@ -66,41 +72,41 @@ export function SettingsTab() {
     if (perm === 'granted') {
       setNotifier({ enabled: true })
     } else if (perm === 'denied') {
-      alert('浏览器已禁用通知，请在地址栏左侧的权限里手动开启。')
+      alert(t('settings.notifier.denied'))
     } else if (perm === 'unsupported') {
-      alert('当前浏览器不支持通知 API。')
+      alert(t('settings.notifier.unsupported'))
     }
   }
 
   return (
     <div className="settings">
 
-      {/* 主题 */}
-      <Section title="主题">
+      {/* Theme */}
+      <Section title={t('settings.theme')}>
         <div className="theme-picker__grid">
-          {THEMES.map((t) => (
+          {THEMES.map((tm) => (
             <ThemeChooserCard
-              key={t.id}
-              id={t.id}
-              name={t.name}
-              hint={t.hint}
-              active={t.id === theme}
-              onSelect={() => setTheme(t.id as ThemeName)}
+              key={tm.id}
+              id={tm.id}
+              name={tm.name}
+              hint={tm.hint}
+              active={tm.id === theme}
+              onSelect={() => setTheme(tm.id as ThemeName)}
             />
           ))}
-          {customThemes.map((t) => (
+          {customThemes.map((tm) => (
             <ThemeChooserCard
-              key={t.id}
-              id={t.id}
-              name={t.name}
-              hint={t.hint ?? 'custom'}
-              active={t.id === theme}
+              key={tm.id}
+              id={tm.id}
+              name={tm.name}
+              hint={tm.hint ?? 'custom'}
+              active={tm.id === theme}
               custom
-              onSelect={() => setTheme(t.id as ThemeName)}
+              onSelect={() => setTheme(tm.id as ThemeName)}
               onDelete={() => {
-                if (confirm(`移除主题「${t.name}」？`)) {
-                  if (theme === t.id) setTheme('mono-light')
-                  removeTheme(t.id)
+                if (confirm(t('settings.theme.remove.confirm', { name: tm.name }))) {
+                  if (theme === tm.id) setTheme('mono-light')
+                  removeTheme(tm.id)
                 }
               }}
             />
@@ -120,50 +126,67 @@ export function SettingsTab() {
         />
         <ListRow
           icon={<IconUpload width={14} height={14} />}
-          title="导入主题文件"
-          desc="JSON 格式 · 见使用方法"
+          title={t('settings.theme.import')}
+          desc={t('settings.theme.import.desc')}
           onClick={() => themeFileRef.current?.click()}
         />
       </Section>
 
-      {/* 数据源 */}
-      <Section title="数据源">
+      {/* Language */}
+      <Section title={t('settings.lang')}>
+        <div className="edit__segmented" style={{ alignSelf: 'flex-start' }}>
+          {LANGS.map((l) => (
+            <button
+              key={l.id}
+              type="button"
+              className="edit__seg-btn"
+              aria-pressed={lang === l.id}
+              onClick={() => setLang(l.id as Lang)}
+            >
+              {l.name}
+            </button>
+          ))}
+        </div>
+      </Section>
+
+      {/* Sources */}
+      <Section title={t('settings.sources')}>
         <SourceManager />
       </Section>
 
-      {/* 通知 */}
-      <Section title="桌面通知">
+      {/* Notifications */}
+      <Section title={t('settings.notifier')}>
         <ListRow
           icon={<IconBell width={14} height={14} />}
-          title={notifier.enabled ? '已开启' : '已关闭'}
+          title={notifier.enabled ? t('settings.notifier.on') : t('settings.notifier.off')}
           desc={notifier.enabled
-            ? '截止前 1 小时 / 10 分 / 当下三次提醒'
-            : '安装为 PWA 后可后台触发'}
+            ? t('settings.notifier.on.desc')
+            : t('settings.notifier.off.desc')}
           right={
             <span className={`pill-toggle${notifier.enabled ? ' pill-toggle--on' : ''}`}>
-              {notifier.enabled ? '停用' : '启用'}
+              {notifier.enabled ? t('settings.notifier.disable') : t('settings.notifier.enable')}
             </span>
           }
           onClick={toggleNotifier}
         />
       </Section>
 
-      {/* 直播大屏 */}
-      <Section title="直播大屏 · OBS">
+      {/* Broadcast / OBS */}
+      <Section title={t('settings.broadcast')}>
         <ListRow
           icon={<IconTv width={14} height={14} />}
-          title="生成嵌入 URL"
-          desc="绿幕 / 透明 / 自定义字体 · 用于 OBS 浏览器源"
+          title={t('settings.broadcast.title')}
+          desc={t('settings.broadcast.desc')}
           right={
-            <span className="pill-toggle">{broadcastOpen ? '收起' : '打开'}</span>
+            <span className="pill-toggle">{broadcastOpen ? t('settings.broadcast.close') : t('settings.broadcast.open')}</span>
           }
           onClick={() => setBroadcastOpen((v) => !v)}
         />
         {broadcastOpen && <BroadcastBuilder />}
       </Section>
 
-      {/* 数据迁移 */}
-      <Section title="导入 / 导出">
+      {/* Import / Export */}
+      <Section title={t('settings.io')}>
         <input
           ref={fileRef}
           type="file"
@@ -177,30 +200,30 @@ export function SettingsTab() {
         />
         <ListRow
           icon={<IconDownload width={14} height={14} />}
-          title="导出 JSON"
-          desc={`下载 ${todos.filter((t) => t.sourceId === LOCAL_SOURCE_ID).length} 个本地任务`}
+          title={t('settings.io.export')}
+          desc={t('settings.io.export.desc', { count: todos.filter((todo) => todo.sourceId === LOCAL_SOURCE_ID).length })}
           onClick={exportLocal}
         />
         <ListRow
           icon={<IconUpload width={14} height={14} />}
-          title="导入 JSON"
-          desc="按 id 合并 · 与订阅同格式"
+          title={t('settings.io.import')}
+          desc={t('settings.io.import.desc')}
           onClick={() => fileRef.current?.click()}
         />
       </Section>
 
-      {/* 帮助 + 关于 */}
-      <Section title="使用方法 · 关于">
+      {/* Help + About */}
+      <Section title={t('settings.help')}>
         <ListRow
           icon={<IconHelp width={14} height={14} />}
-          title="打开文档"
-          desc="9 章 · 快捷键 / 时间预设 / 订阅 / OBS / PWA"
+          title={t('settings.help.open')}
+          desc={t('settings.help.open.desc')}
           onClick={() => setHelp('toc')}
         />
         <ListRow
           icon={<IconExternal width={14} height={14} />}
-          title="项目"
-          desc="CountDown · v0.24 · 完全 Serverless"
+          title={t('settings.about')}
+          desc={t('settings.about.desc', { version: APP_VERSION })}
         />
       </Section>
 
@@ -291,6 +314,7 @@ function ThemeChooserCard({
 
 function BroadcastBuilder() {
   const todos = useTodos(selectActive)
+  const t = useT()
   const [todoId, setTodoId] = useState<string>(todos[0]?.id ?? 'next')
   const [bg, setBg] = useState('theme')
   const [font, setFont] = useState('')
@@ -311,7 +335,7 @@ function BroadcastBuilder() {
   return (
     <div className="settings__inset">
       <div className="field">
-        <span className="field__label">任务</span>
+        <span className="field__label">{t('broadcast.task')}</span>
         <select
           value={todoId}
           onChange={(e) => setTodoId(e.target.value)}
@@ -321,39 +345,39 @@ function BroadcastBuilder() {
             fontSize: 13, outline: 'none',
           }}
         >
-          <option value="next">最近 DDL（动态跟随）</option>
-          {todos.map((t) => <option key={t.id} value={t.id}>{t.title}</option>)}
+          <option value="next">{t('broadcast.task.next')}</option>
+          {todos.map((todo) => <option key={todo.id} value={todo.id}>{todo.title}</option>)}
         </select>
       </div>
 
       <div className="field">
-        <span className="field__label">背景</span>
+        <span className="field__label">{t('broadcast.bg')}</span>
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
           {[
-            { v: 'theme', l: '主题底色' },
-            { v: 'transparent', l: '透明' },
-            { v: 'chroma', l: '绿幕' },
-            { v: 'black', l: '纯黑' },
-            { v: 'white', l: '纯白' },
+            { v: 'theme',       k: 'broadcast.bg.theme' },
+            { v: 'transparent', k: 'broadcast.bg.transparent' },
+            { v: 'chroma',      k: 'broadcast.bg.chroma' },
+            { v: 'black',       k: 'broadcast.bg.black' },
+            { v: 'white',       k: 'broadcast.bg.white' },
           ].map((o) => (
             <button
               key={o.v}
               className="tag tag--filter"
               aria-pressed={bg === o.v}
               onClick={() => setBg(o.v)}
-            >{o.l}</button>
+            >{t(o.k)}</button>
           ))}
         </div>
       </div>
 
       <div className="field">
-        <span className="field__label">字体</span>
+        <span className="field__label">{t('broadcast.font')}</span>
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
           {[
-            { v: '', l: '主题默认' },
-            { v: 'sans', l: 'Sans' },
+            { v: '',      l: t('broadcast.font.default') },
+            { v: 'sans',  l: 'Sans' },
             { v: 'serif', l: 'Serif' },
-            { v: 'mono', l: 'Mono' },
+            { v: 'mono',  l: 'Mono' },
           ].map((o) => (
             <button
               key={o.v}
@@ -367,7 +391,7 @@ function BroadcastBuilder() {
 
       <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
         <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <span className="field__label">缩放</span>
+          <span className="field__label">{t('broadcast.scale')}</span>
           <input
             type="number"
             min="0.5" max="2" step="0.1"
@@ -381,7 +405,7 @@ function BroadcastBuilder() {
           />
         </label>
         <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <span className="field__label">强调色（hex）</span>
+          <span className="field__label">{t('broadcast.accent')}</span>
           <input
             type="text"
             value={accent}
@@ -400,12 +424,12 @@ function BroadcastBuilder() {
             checked={showTitle}
             onChange={(e) => setShowTitle(e.target.checked)}
           />
-          显示标题
+          {t('broadcast.title.show')}
         </label>
       </div>
 
       <div className="field">
-        <span className="field__label">URL</span>
+        <span className="field__label">{t('broadcast.url')}</span>
         <div style={{ display: 'flex', gap: 8 }}>
           <input
             value={url}
@@ -419,12 +443,12 @@ function BroadcastBuilder() {
           />
           <button
             className="btn"
-            onClick={() => navigator.clipboard?.writeText(url).then(() => alert('已复制'))}
-          >复制</button>
+            onClick={() => navigator.clipboard?.writeText(url).then(() => alert(t('common.copied')))}
+          >{t('broadcast.copy')}</button>
           <button
             className="btn"
             onClick={() => window.open(url, '_blank')}
-          >预览</button>
+          >{t('broadcast.preview')}</button>
         </div>
       </div>
     </div>

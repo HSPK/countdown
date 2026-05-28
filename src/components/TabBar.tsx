@@ -1,29 +1,31 @@
 import { useSettings, type TabId } from '../store/settings'
+import { useT } from '../lib/i18n'
 import { IconHome, IconList, IconSettings } from './Icons'
 import type { JSX } from 'react'
 
-const TABS: Array<{ id: TabId; label: string; icon: () => JSX.Element }> = [
-  { id: 'home',     label: '首页', icon: () => <IconHome     width={24} height={24} /> },
-  { id: 'all',      label: '全部', icon: () => <IconList     width={24} height={24} /> },
-  { id: 'settings', label: '设置', icon: () => <IconSettings width={24} height={24} /> },
+const TABS: Array<{ id: TabId; key: string; icon: () => JSX.Element }> = [
+  { id: 'home',     key: 'tab.home',     icon: () => <IconHome     width={24} height={24} /> },
+  { id: 'all',      key: 'tab.all',      icon: () => <IconList     width={24} height={24} /> },
+  { id: 'settings', key: 'tab.settings', icon: () => <IconSettings width={24} height={24} /> },
 ]
 
 export function TabBar() {
   const tab = useSettings((s) => s.tab)
   const setTab = useSettings((s) => s.setTab)
+  const t = useT()
   return (
-    <nav className="tabbar" role="tablist" aria-label="主导航">
-      {TABS.map((t) => (
+    <nav className="tabbar" role="tablist" aria-label={t('tab.settings')}>
+      {TABS.map((tab_) => (
         <button
-          key={t.id}
+          key={tab_.id}
           role="tab"
-          aria-selected={tab === t.id}
+          aria-selected={tab === tab_.id}
           className="tabbar__btn"
-          onClick={() => setTab(t.id)}
+          onClick={() => setTab(tab_.id)}
         >
           <span className="tabbar__btn-inner">
-            <span className="tabbar__btn-icon">{t.icon()}</span>
-            <span className="tabbar__btn-label">{t.label}</span>
+            <span className="tabbar__btn-icon">{tab_.icon()}</span>
+            <span className="tabbar__btn-label">{t(tab_.key)}</span>
           </span>
         </button>
       ))}

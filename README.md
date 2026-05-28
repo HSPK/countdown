@@ -1,47 +1,50 @@
 # CountDown
 
-> 编辑式倒计时 + Todo · 4 套主题 · 完全 Serverless · PWA
+> Editorial countdown + todo · 5 themes · 100% serverless · PWA
 
 ▶︎ Live: <https://hspk.github.io/countdown/>
 
-## 特性
+## Features
 
-- **首页 / 全部 / 设置** 3-tab 编辑式列表
-- **4 套主题** Mono Light / Mono Dark / Paper / Cyberpunk · 自定义主题支持 JSON 文件导入
-- **9 章使用手册** 内置文档页 + 坐标导航翻页
-- **直播大屏（OBS）** `?broadcast=<id>&bg=chroma|transparent|...` 嵌入式 URL
-- **数据源订阅** 远端 JSON 订阅（只读）+ 本地导入导出
-- **重复任务** 每天 / 每周 / 每月，完成自动推进
-- **桌面通知** 截止前 1h / 10m / 当下三级提醒
-- **PWA** 可装到桌面 / 主屏，离线可用
-- **Serverless** — 全栈纯前端，可丢任意静态主机
+- **Home / All / Settings** — three-tab editorial list
+- **5 built-in themes** — Mono Light / Mono Dark / Paper / Cyberpunk / Flip Clock; custom themes load from JSON
+- **i18n** — English (default) and 中文; switch in Settings
+- **9-chapter manual** — built-in docs with coordinate-style pagination
+- **Broadcast (OBS)** — `?broadcast=<id>&bg=chroma|transparent|...` embed URL for live overlays
+- **Wheel date picker** with lunar calendar (农历) display
+- **Recurring tasks** — daily / weekly / monthly / custom cron, each occurrence rendered as its own row
+- **Subscription sources** — remote JSON sources (read-only) alongside local todos; import / export JSON
+- **Desktop notifications** — three-stage alerts: 1h / 10m / due
+- **PWA** — installable to desktop & homescreen, offline-capable
+- **Serverless** — purely client-side, drop on any static host
+- **Mobile-tuned** — safe-area-inset for notch / home indicator, wheel input that snaps one cell per tick, infinite scroll on the All tab
 
-## 开发
+## Development
 
 ```bash
 npm install
 npm run dev          # http://localhost:5173
 ```
 
-## 构建 & 部署
+## Build & Deploy
 
 ```bash
-npm run build        # 产物在 dist/
-npm run preview      # 本地预览 dist/
+npm run build        # output: dist/
+npm run preview      # preview dist/ locally
 ```
 
-`dist/` 是纯静态文件，可部署到：
+`dist/` is a fully static bundle and can be deployed to:
 
-- **GitHub Pages**（本仓库默认通过 `.github/workflows/deploy.yml` 自动部署到 `https://hspk.github.io/countdown/`）
-- Vercel / Netlify / Cloudflare Pages（设 build = `npm run build`，output = `dist`）
-- 任何 nginx / S3 / OSS 静态主机
+- **GitHub Pages** (this repo auto-deploys to `https://hspk.github.io/countdown/` via `.github/workflows/deploy.yml`)
+- Vercel / Netlify / Cloudflare Pages (build = `npm run build`, output = `dist`)
+- Any nginx / S3 / OSS-style static host
 
-> 子路径部署需要设置 `VITE_BASE` 环境变量（如 `/countdown/`），workflow 已自动注入。
+> For sub-path deploys set the `VITE_BASE` env variable (e.g. `/countdown/`). The workflow already injects it from the repo name.
 
-## 技术栈
+## Stack
 
 - Vite + React 18 + TypeScript
-- Zustand（状态 + persist）
-- marked + DOMPurify（Markdown）
-- vite-plugin-pwa（Workbox SW + manifest）
-- 100% 客户端 · 0 后端依赖
+- Zustand (state + persist middleware)
+- marked + DOMPurify (Markdown rendering)
+- vite-plugin-pwa (Workbox SW + manifest)
+- 100% client-side · zero backend dependency

@@ -5,15 +5,16 @@ import { useSources } from '../store/sources'
 import { TodoRow } from './TodoRow'
 import { EditModal } from './EditModal'
 import { useNow } from '../hooks/useNow'
+import { useT } from '../lib/i18n'
 import { bucketOf, type Bucket } from '../lib/time'
 import { expandRecurring, type VirtualOccurrence } from '../lib/recurrence'
 import { IconChevronDown } from './Icons'
 
-const BUCKET_LABEL: Record<Bucket, string> = {
-  today: 'Today',
-  week:  'This Week',
-  month: 'This Month',
-  later: 'Later',
+const BUCKET_KEYS: Record<Bucket, string> = {
+  today: 'bucket.today',
+  week:  'bucket.week',
+  month: 'bucket.month',
+  later: 'bucket.later',
 }
 
 const PAGE_DAYS = 30
@@ -25,6 +26,7 @@ export function AllTab() {
   const clearCompleted = useTodos((s) => s.clearCompleted)
   const sources = useSources((s) => s.sources)
   const now = useNow()
+  const t = useT()
 
   const [editing, setEditing] = useState<Todo | null>(null)
   const [q, setQ] = useState('')
@@ -117,8 +119,8 @@ export function AllTab() {
             type="text"
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="搜索标题或备注…"
-            aria-label="搜索"
+            placeholder={t('search.placeholder')}
+            aria-label={t('search.placeholder')}
           />
         </div>
 
@@ -126,7 +128,7 @@ export function AllTab() {
           <div className="filters">
             {allTags.length > 0 && (
               <div className="filters__group">
-                <span className="filters__label">标签</span>
+                <span className="filters__label">{t('filters.tags')}</span>
                 {allTags.map((tag) => (
                   <button
                     key={tag}
@@ -141,7 +143,7 @@ export function AllTab() {
             )}
             {sources.length > 1 && (
               <div className="filters__group">
-                <span className="filters__label">数据源</span>
+                <span className="filters__label">{t('filters.sources')}</span>
                 {sources.map((s) => (
                   <button
                     key={s.id}
@@ -161,7 +163,7 @@ export function AllTab() {
       <div className="list">
         {occurrences.length === 0 ? (
           <div className="empty">
-            {q || activeTags.size || activeSources.size ? '没有匹配的任务' : '还没有任务'}
+            {q || activeTags.size || activeSources.size ? t('list.empty.search') : t('list.empty.none')}
           </div>
         ) : (
           order
@@ -170,8 +172,8 @@ export function AllTab() {
               <section className="list__section" key={b}>
                 <header className="list__head">
                   <h2 className="list__head-title">
-                    {BUCKET_LABEL[b]}
-                    {b === 'later' && <span className="list__head-range"> · 未来 {pages * PAGE_DAYS}d</span>}
+                    {t(BUCKET_KEYS[b])}
+                    {b === 'later' && <span className="list__head-range"> · {t('bucket.range', { days: pages * PAGE_DAYS })}</span>}
                   </h2>
                   <span className="list__head-count">{grouped[b].length}</span>
                 </header>
@@ -191,14 +193,14 @@ export function AllTab() {
         {hasMore && (
           <div ref={sentinelRef} className="list__sentinel" aria-hidden>
             <span className="list__sentinel-pulse" />
-            <span className="list__sentinel-label">加载更多…</span>
+            <span className="list__sentinel-label">{t('list.loading')}</span>
           </div>
         )}
 
         {completed.length > 0 && (
           <section className="list__section">
             <header className="list__head">
-              <h2 className="list__head-title">Done</h2>
+              <h2 className="list__head-title">{t('bucket.done')}</h2>
               <span className="list__head-count">{completed.length}</span>
               <span className="list__spacer" />
               <button className="list__head-btn" onClick={() => setShowDone((v) => !v)}>
@@ -210,21 +212,21 @@ export function AllTab() {
                     transition: 'transform 200ms',
                   }}
                 />
-                {showDone ? 'Hide' : 'Show'}
+                {showDone ? t('list.hide') : t('list.show')}
               </button>
               {showDone && (
                 <button
                   className="list__head-btn"
                   onClick={() => {
-                    if (confirm(`清空 ${completed.length} 个已完成任务？`)) clearCompleted()
+                    if (confirm(t('list.clear.confirm', { count: completed.length }))) clearCompleted()
                   }}
                 >
-                  Clear
+                  {t('list.clear')}
                 </button>
               )}
             </header>
-            {showDone && completed.map((t) => (
-              <TodoRow key={t.id} todo={t} onEdit={setEditing} showSource />
+            {showDone && completed.map((t_) => (
+              <TodoRow key={t_.id} todo={t_} onEdit={setEditing} showSource />
             ))}
           </section>
         )}

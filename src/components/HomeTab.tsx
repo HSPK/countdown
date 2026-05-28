@@ -5,14 +5,15 @@ import { TodoRow } from './TodoRow'
 import { Hero } from './Hero'
 import { EditModal } from './EditModal'
 import { useNow } from '../hooks/useNow'
+import { useT } from '../lib/i18n'
 import { bucketOf, type Bucket } from '../lib/time'
 import { expandRecurring, type VirtualOccurrence } from '../lib/recurrence'
 
-const BUCKET_LABEL: Record<Bucket, string> = {
-  today: 'Today',
-  week:  'This Week',
-  month: 'This Month',
-  later: 'Later',
+const BUCKET_KEYS: Record<Bucket, string> = {
+  today: 'bucket.today',
+  week:  'bucket.week',
+  month: 'bucket.month',
+  later: 'bucket.later',
 }
 
 const HOME_HORIZON_DAYS = 30
@@ -20,10 +21,11 @@ const HOME_HORIZON_DAYS = 30
 export function HomeTab() {
   const todos = useTodos((s) => s.todos)
   const now = useNow()
+  const t = useT()
   const [editing, setEditing] = useState<Todo | null>(null)
 
   const active = todos
-    .filter((t) => !t.completedAt)
+    .filter((t_) => !t_.completedAt)
     .slice()
     .sort((a, b) => {
       if (a.pinned !== b.pinned) return a.pinned ? -1 : 1
@@ -39,17 +41,11 @@ export function HomeTab() {
       .sort((a, b) => a.deadline - b.deadline)
   }, [active, now])
 
-  /* Home shows the upcoming month at most: Today / This Week / This Month.
-     Anything farther becomes a quiet "···" line. */
   const today = occurrences.filter((o) => bucketOf(o.deadline, now) === 'today')
   const week  = occurrences.filter((o) => bucketOf(o.deadline, now) === 'week')
   const month = occurrences.filter((o) => bucketOf(o.deadline, now) === 'month')
   const visibleCount = today.length + week.length + month.length
-
-  /* "later" indicator counts how many ACTIVE base todos have their next
-     occurrence past the horizon — recurring ones never trigger this since
-     we already capped expansion. */
-  const laterBase = active.filter((t) => bucketOf(t.deadline, now) === 'later').length
+  const laterBase = active.filter((t_) => bucketOf(t_.deadline, now) === 'later').length
 
   return (
     <>
@@ -61,7 +57,7 @@ export function HomeTab() {
           return (
             <section className="list__section" key={b}>
               <header className="list__head">
-                <h2 className="list__head-title">{BUCKET_LABEL[b]}</h2>
+                <h2 className="list__head-title">{t(BUCKET_KEYS[b])}</h2>
                 <span className="list__head-count">{arr.length}</span>
               </header>
               {arr.map((o) => (
@@ -77,11 +73,13 @@ export function HomeTab() {
         })}
 
         {visibleCount === 0 && (
-          <div className="empty">还没有任务，下面新建一个。</div>
+          <div className="empty">{t('hero.empty')}</div>
         )}
 
         {laterBase > 0 && (
-          <div className="list__more" aria-label={`还有 ${laterBase} 个更远的任务`} title={`${laterBase} 个更远的任务`}>
+          <div className="list__more"
+               aria-label={t('list.more.title', { count: laterBase })}
+               title={t('list.more.title', { count: laterBase })}>
             <span>···</span>
           </div>
         )}

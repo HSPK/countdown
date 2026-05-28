@@ -6,6 +6,7 @@ import { WheelPicker } from './WheelPicker'
 import { Markdown } from './Markdown'
 import { formatAbsolute } from '../lib/time'
 import { parseCron } from '../lib/recurrence'
+import { useT } from '../lib/i18n'
 import { IconX, IconChevronDown } from './Icons'
 
 interface Props {
@@ -13,16 +14,17 @@ interface Props {
   onClose: () => void
 }
 
-const RECURRENCE_OPTS: Array<{ value: Recurrence; label: string }> = [
-  { value: 'none',    label: '不重复' },
-  { value: 'daily',   label: '每天' },
-  { value: 'weekly',  label: '每周' },
-  { value: 'monthly', label: '每月' },
-  { value: 'custom',  label: '自定义' },
+const RECURRENCE_OPTS: Array<{ value: Recurrence; labelKey: string }> = [
+  { value: 'none',    labelKey: 'recurrence.none' },
+  { value: 'daily',   labelKey: 'recurrence.daily' },
+  { value: 'weekly',  labelKey: 'recurrence.weekly' },
+  { value: 'monthly', labelKey: 'recurrence.monthly' },
+  { value: 'custom',  labelKey: 'recurrence.custom' },
 ]
 
 export function EditModal({ todo, onClose }: Props) {
   const updateTodo = useTodos((s) => s.updateTodo)
+  const t = useT()
   const [title, setTitle] = useState('')
   const [deadline, setDeadline] = useState<number>(Date.now())
   const [createdAt, setCreatedAt] = useState<number>(Date.now())
@@ -66,7 +68,7 @@ export function EditModal({ todo, onClose }: Props) {
   if (!todo) return null
 
   const tags = Array.from(new Set(
-    tagsText.split(/[\s,，]+/).map((t) => t.replace(/^#/, '').trim()).filter(Boolean),
+    tagsText.split(/[\s,，]+/).map((tag) => tag.replace(/^#/, '').trim()).filter(Boolean),
   ))
 
   const cronValid = recurrence !== 'custom' || (cronExpr.trim() !== '' && parseCron(cronExpr.trim()) !== null)
@@ -95,8 +97,8 @@ export function EditModal({ todo, onClose }: Props) {
     >
       <div className="modal modal--edit">
         <header className="modal__header">
-          <h2 className="modal__h2">编辑任务</h2>
-          <button className="modal__close" aria-label="关闭" onClick={onClose}>
+          <h2 className="modal__h2">{t('edit.title')}</h2>
+          <button className="modal__close" aria-label={t('edit.close')} onClick={onClose}>
             <IconX width={16} height={16} />
           </button>
         </header>
@@ -107,29 +109,29 @@ export function EditModal({ todo, onClose }: Props) {
           <input
             className="edit__title"
             value={title}
-            placeholder="任务标题"
+            placeholder={t('edit.title.input')}
             onChange={(e) => setTitle(e.target.value)}
           />
 
           {/* Tags + Repeat — side by side on desktop */}
           <div className="edit__grid edit__grid--2">
             <div className="edit__field">
-              <label className="edit__label">标签</label>
+              <label className="edit__label">{t('edit.tags')}</label>
               <input
                 className="edit__input"
                 value={tagsText}
                 onChange={(e) => setTagsText(e.target.value)}
-                placeholder="#工作 #学习"
+                placeholder={t('edit.tags.hint')}
               />
               {tags.length > 0 && (
                 <div className="edit__tags-preview">
-                  {tags.map((t) => <span key={t} className="tag">#{t}</span>)}
+                  {tags.map((tag) => <span key={tag} className="tag">#{tag}</span>)}
                 </div>
               )}
             </div>
 
             <div className="edit__field">
-              <label className="edit__label">重复</label>
+              <label className="edit__label">{t('edit.repeat')}</label>
               <div className="edit__segmented">
                 {RECURRENCE_OPTS.map((opt) => (
                   <button
@@ -139,7 +141,7 @@ export function EditModal({ todo, onClose }: Props) {
                     aria-pressed={recurrence === opt.value}
                     onClick={() => setRecurrence(opt.value)}
                   >
-                    {opt.label}
+                    {t(opt.labelKey)}
                   </button>
                 ))}
               </div>
@@ -150,14 +152,15 @@ export function EditModal({ todo, onClose }: Props) {
                     value={cronExpr}
                     onChange={(e) => setCronExpr(e.target.value)}
                     placeholder="0 9 * * 1-5"
-                    aria-label="cron 表达式"
+                    aria-label="cron expression"
                     spellCheck={false}
                   />
-                  <p className="edit__cron-hint">
-                    格式 <code>分 时 日 月 周</code> · 支持 <code>*</code> · <code>n</code> · <code>n,m</code> · <code>a-b</code> · <code>*/k</code>
-                  </p>
+                  <p
+                    className="edit__cron-hint"
+                    dangerouslySetInnerHTML={{ __html: t('edit.cron.hint') }}
+                  />
                   {!cronValid && cronExpr.trim() !== '' && (
-                    <p className="edit__cron-error">无法解析的表达式</p>
+                    <p className="edit__cron-error">{t('edit.cron.invalid')}</p>
                   )}
                 </div>
               )}
@@ -172,7 +175,7 @@ export function EditModal({ todo, onClose }: Props) {
               aria-expanded={showDeadlinePicker}
               onClick={() => setShowDeadlinePicker((v) => !v)}
             >
-              <span className="edit__collapsible-label">截止时间</span>
+              <span className="edit__collapsible-label">{t('edit.deadline')}</span>
               <span className="edit__collapsible-value">{formatAbsolute(deadline)}</span>
               <IconChevronDown
                 width={14} height={14}
@@ -198,7 +201,7 @@ export function EditModal({ todo, onClose }: Props) {
               aria-expanded={showCreatedAt}
               onClick={() => setShowCreatedAt((v) => !v)}
             >
-              <span className="edit__collapsible-label">创建时间</span>
+              <span className="edit__collapsible-label">{t('edit.created')}</span>
               <span className="edit__collapsible-value">{formatAbsolute(createdAt)}</span>
               <IconChevronDown
                 width={14} height={14}
@@ -219,22 +222,22 @@ export function EditModal({ todo, onClose }: Props) {
           {/* Notes — Markdown editor that toggles between edit and preview */}
           <div className="edit__field">
             <div className="edit__notes-head">
-              <label className="edit__label">备注 · Markdown</label>
+              <label className="edit__label">{t('edit.notes')}</label>
               <button
                 type="button"
                 className="edit__notes-toggle"
                 aria-pressed={previewMode}
                 onClick={() => setPreviewMode((v) => !v)}
-                title={previewMode ? '回到编辑' : '查看预览'}
+                title={previewMode ? t('edit.notes.editor') : t('edit.notes.preview')}
               >
-                {previewMode ? '编辑' : '预览'}
+                {previewMode ? t('edit.notes.editor') : t('edit.notes.preview')}
               </button>
             </div>
             {previewMode ? (
               <div className="edit__notes-preview">
                 {notes.trim()
                   ? <Markdown source={notes} />
-                  : <div className="edit__notes-preview-empty">（暂无内容）</div>}
+                  : <div className="edit__notes-preview-empty">{t('edit.notes.empty')}</div>}
               </div>
             ) : (
               <textarea
@@ -242,7 +245,7 @@ export function EditModal({ todo, onClose }: Props) {
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 rows={6}
-                placeholder="**粗体** *斜体* `代码` - 列表 > 引用"
+                placeholder={t('edit.notes.placeholder')}
               />
             )}
           </div>
@@ -250,10 +253,10 @@ export function EditModal({ todo, onClose }: Props) {
         </div>
 
         <footer className="modal__footer">
-          <span className="modal__hint">⌘ + Enter 保存</span>
+          <span className="modal__hint">{t('edit.save.hint')}</span>
           <div className="modal__footer-actions">
-            <button className="btn" onClick={onClose}>取消</button>
-            <button className="btn btn--primary" onClick={save} disabled={!title.trim() || !cronValid}>保存</button>
+            <button className="btn" onClick={onClose}>{t('edit.cancel')}</button>
+            <button className="btn btn--primary" onClick={save} disabled={!title.trim() || !cronValid}>{t('edit.save')}</button>
           </div>
         </footer>
       </div>

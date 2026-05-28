@@ -4,6 +4,7 @@ import { useTodos } from '../store/todos'
 import { useSettings } from '../store/settings'
 import { useSources } from '../store/sources'
 import { useNow } from '../hooks/useNow'
+import { useT } from '../lib/i18n'
 import { formatHM, formatRowTime, urgencyOf } from '../lib/time'
 import {
   IconCheck,
@@ -15,8 +16,8 @@ import {
   IconMoreHorizontal,
 } from './Icons'
 
-const RECURRENCE_LABEL: Record<string, string> = {
-  daily: '每天', weekly: '每周', monthly: '每月', custom: '自定义',
+const RECURRENCE_LABEL_KEYS: Record<string, string> = {
+  daily: 'recurrence.daily', weekly: 'recurrence.weekly', monthly: 'recurrence.monthly', custom: 'recurrence.custom',
 }
 
 interface Props {
@@ -32,6 +33,7 @@ interface Props {
 
 export function TodoRow({ todo, onEdit, showSource, occurrenceDeadline }: Props) {
   const now = useNow()
+  const t = useT()
   const toggleComplete = useTodos((s) => s.toggleComplete)
   const completeOccurrence = useTodos((s) => s.completeOccurrence)
   const togglePin = useTodos((s) => s.togglePin)
@@ -49,7 +51,6 @@ export function TodoRow({ todo, onEdit, showSource, occurrenceDeadline }: Props)
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement | null>(null)
 
-  /* Close kebab menu on outside tap / Esc */
   useEffect(() => {
     if (!menuOpen) return
     const onDown = (e: MouseEvent | TouchEvent) => {
@@ -84,9 +85,6 @@ export function TodoRow({ todo, onEdit, showSource, occurrenceDeadline }: Props)
       onClick={(e) => {
         if ((e.target as HTMLElement).closest('button')) return
         if (todo.completedAt) return
-        /* Virtual rows don't enter focus (FocusView reads the live deadline
-           from the parent which would differ from this occurrence). Tap on
-           a virtual row opens edit instead so users can tweak the parent. */
         if (isVirtual) { onEdit(todo); return }
         setFocus(todo.id)
       }}
@@ -103,18 +101,18 @@ export function TodoRow({ todo, onEdit, showSource, occurrenceDeadline }: Props)
               u === 'soon' ? ' row__time--soon' : '')
         }
       >
-        {todo.completedAt ? '完成' : formatRowTime(remaining)}
+        {todo.completedAt ? t('row.done') : formatRowTime(remaining)}
       </div>
 
       <div className="row__main">
         <div className="row__title-wrap">
           {todo.pinned && !isVirtual && (
-            <span className="row__title-icon" aria-label="已置顶" title="已置顶">
+            <span className="row__title-icon" aria-label={t('row.pinned')} title={t('row.pinned')}>
               <IconStarFill width={12} height={12} />
             </span>
           )}
           {todo.recurrence && todo.recurrence !== 'none' && (
-            <span className="row__title-icon" aria-label="重复任务" title={`重复 · ${RECURRENCE_LABEL[todo.recurrence] ?? ''}`}>
+            <span className="row__title-icon" aria-label={t('row.recurring')} title={`${t('row.recurring')} · ${t(RECURRENCE_LABEL_KEYS[todo.recurrence] ?? '')}`}>
               <IconRepeat width={12} height={12} />
             </span>
           )}
@@ -125,14 +123,14 @@ export function TodoRow({ todo, onEdit, showSource, occurrenceDeadline }: Props)
           {todo.recurrence && todo.recurrence !== 'none' && (
             <>
               <span className="row__sub-sep" aria-hidden>·</span>
-              <span>{RECURRENCE_LABEL[todo.recurrence]}</span>
+              <span>{t(RECURRENCE_LABEL_KEYS[todo.recurrence])}</span>
             </>
           )}
           {todo.tags.length > 0 && (
             <>
               <span className="row__sub-sep" aria-hidden>·</span>
               <span className="row__sub-tags">
-                {todo.tags.slice(0, 3).map((t) => <span key={t} className="tag">#{t}</span>)}
+                {todo.tags.slice(0, 3).map((tag) => <span key={tag} className="tag">#{tag}</span>)}
                 {todo.tags.length > 3 && <span className="tag" style={{ opacity: 0.7 }}>+{todo.tags.length - 3}</span>}
               </span>
             </>
@@ -150,8 +148,8 @@ export function TodoRow({ todo, onEdit, showSource, occurrenceDeadline }: Props)
         {!isExternal && (
           <button
             className="row__action"
-            aria-label={todo.completedAt ? '标记未完成' : '完成'}
-            title={todo.completedAt ? '标记未完成' : isVirtual ? '完成本次' : '完成 (Space)'}
+            aria-label={todo.completedAt ? t('row.uncomplete') : t('row.complete')}
+            title={todo.completedAt ? t('row.uncomplete') : isVirtual ? t('row.complete.once') : t('row.complete.hint')}
             onClick={onCheck}
           >
             <IconCheck />
@@ -161,8 +159,8 @@ export function TodoRow({ todo, onEdit, showSource, occurrenceDeadline }: Props)
           <div className="row-menu-wrap" ref={menuRef}>
             <button
               className="row__action"
-              aria-label="更多操作"
-              title="更多"
+              aria-label={t('row.more')}
+              title={t('row.more')}
               aria-haspopup="menu"
               aria-expanded={menuOpen}
               onClick={() => setMenuOpen((v) => !v)}
@@ -180,7 +178,7 @@ export function TodoRow({ todo, onEdit, showSource, occurrenceDeadline }: Props)
                     <span className="row-menu__icon">
                       {todo.pinned ? <IconStarFill width={14} height={14} /> : <IconStar width={14} height={14} />}
                     </span>
-                    <span>{todo.pinned ? '取消置顶' : '置顶'}</span>
+                    <span>{todo.pinned ? t('row.unpin') : t('row.pin')}</span>
                   </button>
                 )}
                 <button
@@ -189,7 +187,7 @@ export function TodoRow({ todo, onEdit, showSource, occurrenceDeadline }: Props)
                   onClick={() => { onEdit(todo); setMenuOpen(false) }}
                 >
                   <span className="row-menu__icon"><IconEdit width={14} height={14} /></span>
-                  <span>{isVirtual ? '编辑原任务' : '编辑'}</span>
+                  <span>{isVirtual ? t('row.edit.parent') : t('row.edit')}</span>
                 </button>
                 {!isVirtual && (
                   <button
@@ -197,11 +195,11 @@ export function TodoRow({ todo, onEdit, showSource, occurrenceDeadline }: Props)
                     role="menuitem"
                     onClick={() => {
                       setMenuOpen(false)
-                      if (confirm(`删除「${todo.title}」？`)) removeTodo(todo.id)
+                      if (confirm(t('row.delete.confirm', { title: todo.title }))) removeTodo(todo.id)
                     }}
                   >
                     <span className="row-menu__icon"><IconTrash width={14} height={14} /></span>
-                    <span>删除</span>
+                    <span>{t('row.delete')}</span>
                   </button>
                 )}
               </div>

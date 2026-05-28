@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware'
 
 export type ThemeName = 'mono-light' | 'mono-dark' | 'paper' | 'cyberpunk' | 'flip'
 export type TabId = 'home' | 'all' | 'settings'
+export type Lang = 'en' | 'zh-CN'
 
 export interface ThemeMeta {
   id: ThemeName
@@ -21,11 +22,13 @@ export const THEMES: ThemeMeta[] = [
 interface SettingsState {
   theme: ThemeName
   tab: TabId
+  lang: Lang
   focusId: string | null
   helpSection: string | null
   setTheme: (t: ThemeName) => void
   cycleTheme: () => void
   setTab: (t: TabId) => void
+  setLang: (l: Lang) => void
   setFocus: (id: string | null) => void
   setHelp: (section: string | null) => void
 }
@@ -35,6 +38,7 @@ export const useSettings = create<SettingsState>()(
     (set, get) => ({
       theme: 'mono-light',
       tab: 'home',
+      lang: 'en',
       focusId: null,
       helpSection: null,
       setTheme: (t) => set({ theme: t }),
@@ -44,15 +48,16 @@ export const useSettings = create<SettingsState>()(
         set({ theme: order[(i + 1) % order.length] })
       },
       setTab: (t) => set({ tab: t }),
+      setLang: (l) => set({ lang: l }),
       setFocus: (id) => set({ focusId: id }),
       setHelp: (s) => set({ helpSection: s }),
     }),
     {
       name: 'countdown.settings.v1',
-      partialize: (s) => ({ theme: s.theme, tab: s.tab }),
-      version: 4,
+      partialize: (s) => ({ theme: s.theme, tab: s.tab, lang: s.lang }),
+      version: 5,
       migrate: (persistedState: unknown) => {
-        const s = persistedState as { theme?: string; tab?: string } | null
+        const s = persistedState as { theme?: string; tab?: string; lang?: string } | null
         const map: Record<string, ThemeName> = {
           'aurora':  'mono-dark',
           'minimal': 'mono-light',
@@ -65,7 +70,9 @@ export const useSettings = create<SettingsState>()(
         }
         const validTabs: TabId[] = ['home', 'all', 'settings']
         const tab: TabId = (s?.tab && validTabs.includes(s.tab as TabId)) ? (s.tab as TabId) : 'home'
-        return { theme, tab }
+        const validLangs: Lang[] = ['en', 'zh-CN']
+        const lang: Lang = (s?.lang && validLangs.includes(s.lang as Lang)) ? (s.lang as Lang) : 'en'
+        return { theme, tab, lang }
       },
     },
   ),

@@ -1,3 +1,5 @@
+import * as settingsStore from '../store/settings'
+
 export type Urgency = 'overdue' | 'critical' | 'soon' | 'near' | 'far'
 export type Bucket = 'today' | 'week' | 'month' | 'later'
 
@@ -70,14 +72,26 @@ export function bucketOf(deadline: number, now: number): Bucket {
   return 'later'
 }
 
-const MONTHS_CN = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月']
+/** Locale-aware "May 28, 14:30" / "5月28日 14:30" style date label. Year
+    is dropped when the date is in the current year. Reads the user's
+    selected language from the settings store. */
 export function formatAbsolute(ts: number): string {
   const d = new Date(ts)
-  const today = new Date()
-  const sameYear = d.getFullYear() === today.getFullYear()
-  const md = `${MONTHS_CN[d.getMonth()]}${d.getDate()}日`
-  const ym = sameYear ? md : `${d.getFullYear()}年${md}`
-  return `${ym} ${pad(d.getHours())}:${pad(d.getMinutes())}`
+  const sameYear = d.getFullYear() === new Date().getFullYear()
+  let lang = 'en'
+  try {
+    // Static ESM import resolved lazily through the import map. settings.ts
+    // does not import time.ts, so there's no cycle.
+    lang = (settingsStore.useSettings.getState() as { lang: string }).lang
+  } catch { /* during pure-fn tests there's no store; fall back to en */ }
+  return new Intl.DateTimeFormat(lang, {
+    year: sameYear ? undefined : 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).format(d)
 }
 
 export function formatHM(ts: number): string {

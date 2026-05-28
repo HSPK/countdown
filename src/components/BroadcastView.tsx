@@ -71,7 +71,7 @@ export function BroadcastView({ todoId }: Props) {
   if (!todo) {
     return (
       <div className="bcast" style={{ background: bgColor }}>
-        <div className="bcast__title">未找到任务</div>
+        <div className="bcast__title">Task not found</div>
         <div className="bcast__meta">broadcast={todoId}</div>
       </div>
     )
@@ -125,7 +125,7 @@ export function BroadcastView({ todoId }: Props) {
 
       {showTitle && (
         <div className="bcast__meta">
-          {overdue ? '已超时' : '截止'} {formatAbsolute(todo.deadline)}
+          {overdue ? 'Overdue' : 'Due'} {formatAbsolute(todo.deadline)}
         </div>
       )}
     </div>

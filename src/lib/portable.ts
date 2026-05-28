@@ -50,14 +50,14 @@ function toTags(v: unknown): string[] {
 
 export function parseTodosJson(raw: string, sourceId: string): Todo[] {
   let data: unknown
-  try { data = JSON.parse(raw) } catch { throw new Error('JSON 解析失败') }
+  try { data = JSON.parse(raw) } catch { throw new Error('JSON parse failed') }
 
   const items: unknown[] = Array.isArray(data)
     ? data
     : Array.isArray((data as { todos?: unknown })?.todos)
       ? ((data as { todos: unknown[] }).todos)
       : []
-  if (!items.length) throw new Error('未找到 todos 列表')
+  if (!items.length) throw new Error('No `todos` array found')
 
   const now = Date.now()
   return items
@@ -102,7 +102,7 @@ export function readFileAsText(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const r = new FileReader()
     r.onload = () => resolve(String(r.result || ''))
-    r.onerror = () => reject(r.error || new Error('文件读取失败'))
+    r.onerror = () => reject(r.error || new Error('Failed to read file'))
     r.readAsText(file)
   })
 }

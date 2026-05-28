@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTodos } from '../store/todos'
 import { ABSOLUTE_PRESETS, RELATIVE_PRESETS, type AbsolutePreset } from '../lib/datePresets'
+import { useT } from '../lib/i18n'
 import { formatHM, pad } from '../lib/time'
 import { WheelPicker } from './WheelPicker'
 import { IconPlus, IconX, IconChevronDown, IconArrowUp, IconCalendar } from './Icons'
@@ -15,7 +16,7 @@ type Choice =
   | { kind: 'custom'; ts: number }
 
 function defaultChoice(): Choice {
-  // Default = 明晚 18:00 (absolute)
+  // Default = tomorrow evening 18:00 (absolute)
   return { kind: 'absolute', presetId: 'tomorrow-pm' }
 }
 
@@ -58,6 +59,7 @@ function resolveDeadline(choice: Choice, now: Date): number {
 
 export function Composer({ inputRef }: Props) {
   const addTodo = useTodos((s) => s.addTodo)
+  const t = useT()
   const [text, setText] = useState('')
   const [tags, setTags] = useState<string[]>([])
   const [choice, setChoice] = useState<Choice>(defaultChoice)
@@ -178,17 +180,17 @@ export function Composer({ inputRef }: Props) {
   const currentLabel = (() => {
     if (choice.kind === 'relative') {
       const p = RELATIVE_PRESETS.find((x) => x.id === choice.presetId)
-      return p ? `+${p.label}` : '时间'
+      return p ? `+${t(p.labelKey)}` : t('composer.time')
     }
     if (choice.kind === 'absolute') {
       const r = resolvedAbsolute.find((x) => x.p.id === choice.presetId)
-      if (r) return `${r.p.label} ${formatHM(r.d.getTime())}`
+      if (r) return `${t(r.p.labelKey)} ${formatHM(r.d.getTime())}`
     }
     if (choice.kind === 'custom') {
       const d = new Date(choice.ts)
       return `${d.getMonth() + 1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`
     }
-    return '时间'
+    return t('composer.time')
   })()
 
   return (
@@ -208,8 +210,8 @@ export function Composer({ inputRef }: Props) {
         <div className="compose-expand">
 
           <div className="compose-section">
-            <div className="compose-section__head">相对时间</div>
-            <div className="compose-section__chips" role="radiogroup" aria-label="相对时间">
+            <div className="compose-section__head">{t('composer.section.relative')}</div>
+            <div className="compose-section__chips" role="radiogroup" aria-label={t('composer.section.relative')}>
               {RELATIVE_PRESETS.map((p) => {
                 const active = choice.kind === 'relative' && choice.presetId === p.id && !showCalendar
                 return (
@@ -220,10 +222,10 @@ export function Composer({ inputRef }: Props) {
                     role="radio"
                     aria-checked={active}
                     onClick={() => pickRelative(p.id)}
-                    title={`从添加时刻起 ${p.label}`}
+                    title={t('preset.rel.title', { label: t(p.labelKey) })}
                     tabIndex={expanded ? 0 : -1}
                   >
-                    {p.label}
+                    {t(p.labelKey)}
                   </button>
                 )
               })}
@@ -231,8 +233,8 @@ export function Composer({ inputRef }: Props) {
           </div>
 
           <div className="compose-section">
-            <div className="compose-section__head">绝对时间</div>
-            <div className="compose-section__chips" role="radiogroup" aria-label="绝对时间">
+            <div className="compose-section__head">{t('composer.section.absolute')}</div>
+            <div className="compose-section__chips" role="radiogroup" aria-label={t('composer.section.absolute')}>
               {resolvedAbsolute.map(({ p, d }) => {
                 const active = choice.kind === 'absolute' && choice.presetId === p.id && !showCalendar
                 return (
@@ -243,10 +245,10 @@ export function Composer({ inputRef }: Props) {
                     role="radio"
                     aria-checked={active}
                     onClick={() => pickAbsolute(p)}
-                    title={`${p.label} · ${formatHM(d.getTime())}`}
+                    title={`${t(p.labelKey)} · ${formatHM(d.getTime())}`}
                     tabIndex={expanded ? 0 : -1}
                   >
-                    <span className="chip__label">{p.label}</span>
+                    <span className="chip__label">{t(p.labelKey)}</span>
                     <span className="chip__time">{formatHM(d.getTime())}</span>
                   </button>
                 )
@@ -258,7 +260,7 @@ export function Composer({ inputRef }: Props) {
                 tabIndex={expanded ? 0 : -1}
               >
                 <IconCalendar width={14} height={14} />
-                <span>{showCalendar ? '收起日历' : '自定义'}</span>
+                <span>{showCalendar ? t('composer.custom.close') : t('composer.custom')}</span>
               </button>
             </div>
           </div>
@@ -276,14 +278,14 @@ export function Composer({ inputRef }: Props) {
       <div className="compose-row">
         <span className="compose-row__plus" aria-hidden><IconPlus width={14} height={14} /></span>
         <div className="compose-pills" onClick={() => inRef.current?.focus()}>
-          {tags.map((t) => (
-            <span key={t} className="tag tag--in-input">
-              #{t}
+          {tags.map((tag) => (
+            <span key={tag} className="tag tag--in-input">
+              #{tag}
               <button
                 type="button"
                 className="tag__x"
-                aria-label={`移除 #${t}`}
-                onClick={(e) => { e.stopPropagation(); removeTag(t) }}
+                aria-label={t('composer.tag.remove', { tag })}
+                onClick={(e) => { e.stopPropagation(); removeTag(tag) }}
               >
                 <IconX width={9} height={9} />
               </button>
@@ -298,8 +300,8 @@ export function Composer({ inputRef }: Props) {
             onKeyDown={onKeyDownInput}
             onFocus={() => setFocused(true)}
             onBlur={() => setFocused(false)}
-            placeholder={tags.length ? '' : '新任务…'}
-            aria-label="新任务"
+            placeholder={tags.length ? '' : t('composer.placeholder')}
+            aria-label={t('composer.placeholder')}
           />
         </div>
         <button
@@ -315,8 +317,8 @@ export function Composer({ inputRef }: Props) {
           type="button"
           className="compose-submit"
           onClick={(e) => { e.stopPropagation(); submit() }}
-          aria-label="添加任务"
-          title="添加任务（无标题则默认 CountDown）"
+          aria-label={t('composer.add')}
+          title={t('composer.add.hint')}
         >
           <IconArrowUp width={16} height={16} />
         </button>

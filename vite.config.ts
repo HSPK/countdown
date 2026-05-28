@@ -17,8 +17,8 @@ export default defineConfig(({ mode }) => {
         registerType: 'autoUpdate',
         includeAssets: ['favicon.svg'],
         manifest: {
-          name: 'Countdown · Fancy Todo',
-          short_name: 'Countdown',
+          name: 'CountDown',
+          short_name: 'CountDown',
           description: 'Editorial countdown for the deadlines you don\'t want to miss.',
           theme_color: '#FAFAFA',
           background_color: '#FAFAFA',

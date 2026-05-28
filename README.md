@@ -1,4 +1,4 @@
-# Countdown · Fancy Todo
+# CountDown
 
 > 编辑式倒计时 + Todo · 4 套主题 · 完全 Serverless · PWA
 

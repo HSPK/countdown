@@ -14,6 +14,7 @@ export function FocusView() {
   const now = useNowFast(!!focusId)
   const [idle, setIdle] = useState(false)
   const [fs, setFs] = useState(false)
+  const [forceRotate, setForceRotate] = useState(false)
   const idleTimer = useRef<number | null>(null)
   const enteredFs = useRef(false)
 
@@ -62,28 +63,50 @@ export function FocusView() {
     }
   }, [focusId])
 
-  /* On mobile-portrait, auto-enter browser fullscreen and lock landscape so
-     the timer always shows in widescreen even with the phone held vertical. */
+  /* On mobile-portrait, try the standard fullscreen + orientation lock path.
+     On platforms where lock() is unavailable or rejected (e.g. iOS Safari
+     in browser mode), fall back to a CSS rotation so the user can still see
+     the timer in landscape orientation. Cancel both when leaving focus. */
   useEffect(() => {
     if (!focusId) return
     const isSmall = window.matchMedia('(max-width: 720px)').matches
     if (!isSmall) return
     let didLock = false
+    let cancelled = false
     ;(async () => {
       try {
         if (!document.fullscreenElement) {
           await document.documentElement.requestFullscreen?.()
           enteredFs.current = true
         }
-        // Safari / older browsers don't expose `lock`.
-        const so = screen.orientation as ScreenOrientation & { lock?: (o: string) => Promise<void> }
+      } catch { /* user denied or unsupported */ }
+      if (cancelled) return
+      const so = screen.orientation as ScreenOrientation & { lock?: (o: string) => Promise<void> }
+      try {
         if (so?.lock) {
           await so.lock('landscape')
           didLock = true
+        } else {
+          throw new Error('no-lock')
         }
-      } catch { /* user denied or unsupported */ }
+      } catch {
+        /* iOS Safari etc. — use CSS rotation if currently portrait. */
+        if (cancelled) return
+        const portrait = window.matchMedia('(orientation: portrait)').matches
+        if (portrait) setForceRotate(true)
+      }
     })()
+
+    /* If the user naturally rotates the device into landscape, drop the
+       forced CSS rotation. */
+    const mql = window.matchMedia('(orientation: landscape)')
+    const onOri = () => { if (mql.matches) setForceRotate(false) }
+    mql.addEventListener?.('change', onOri)
+
     return () => {
+      cancelled = true
+      mql.removeEventListener?.('change', onOri)
+      setForceRotate(false)
       if (didLock) {
         try { (screen.orientation as ScreenOrientation & { unlock?: () => void })?.unlock?.() } catch { /* noop */ }
       }
@@ -118,6 +141,7 @@ export function FocusView() {
     <div
       className="focus"
       data-idle={idle}
+      data-rotate={forceRotate}
       role="dialog"
       aria-modal="true"
       style={{ ['--digit-shrink' as never]: digitShrink }}

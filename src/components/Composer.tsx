@@ -89,8 +89,9 @@ export function Composer({ inputRef }: Props) {
 
   useEffect(() => {
     if (!expanded) return
-    const onDown = (e: MouseEvent) => {
-      if (!wrapRef.current?.contains(e.target as Node)) {
+    const onDown = (e: MouseEvent | TouchEvent) => {
+      const target = (e.target as Node) ?? null
+      if (!wrapRef.current?.contains(target)) {
         setHovering(false); setFocused(false)
       }
     }
@@ -102,9 +103,11 @@ export function Composer({ inputRef }: Props) {
       }
     }
     document.addEventListener('mousedown', onDown)
+    document.addEventListener('touchstart', onDown, { passive: true })
     document.addEventListener('keydown', onKey)
     return () => {
       document.removeEventListener('mousedown', onDown)
+      document.removeEventListener('touchstart', onDown)
       document.removeEventListener('keydown', onKey)
     }
   }, [expanded, showCalendar])

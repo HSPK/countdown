@@ -22,10 +22,25 @@ body {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   overflow-x: hidden;
+  /* Mobile: prevent rubber-band scroll which uncovers the iOS Safari URL bar
+     and disturbs the floating dock. */
+  overscroll-behavior-y: none;
+  -webkit-overflow-scrolling: touch;
   transition: background-color var(--dur-med) var(--ease), color var(--dur-med) var(--ease);
 }
 button { font: inherit; color: inherit; background: none; border: none; cursor: pointer; padding: 0; }
 input, textarea, select { font: inherit; color: inherit; }
+
+/* Mobile tap hygiene — kill grey highlight, use the OS tap behavior
+   (no 300ms wait), no double-tap zoom. */
+button, a, [role="button"], [role="tab"], [role="radio"], .row, .toc-item, .list-row,
+.tabbar__btn, .row__action, .focus__top-btn, .picker__nav-btn, .calendar__day,
+.chip, .compose-time-btn, .compose-submit, .tag__x, .help__back, .help__toc-btn,
+.help__nav-btn, .help__dot {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
 [data-theme="paper"] body { font-feature-settings: 'liga', 'kern'; }
 [data-theme="cyberpunk"] body { font-feature-settings: 'tnum'; }
 
@@ -56,6 +71,32 @@ kbd {
   }
 }
 
+/* Touch devices — replace hover-only interactions with :active so taps
+   give immediate visual feedback (mobile has no hover state). */
+@media (hover: none) and (pointer: coarse) {
+  .row:active,
+  .toc-item:active,
+  .list-row--clickable:active,
+  .help__back:active,
+  .help__toc-btn:active,
+  .help__nav-btn:not(:disabled):active,
+  .tabbar__btn:active .tabbar__btn-inner,
+  .row__action:active,
+  .focus__top-btn:active,
+  .picker__nav-btn:active,
+  .source-row__btn:not(:disabled):active,
+  .theme-card:active,
+  .tag--filter:active {
+    background: var(--bg-2);
+  }
+  .compose-submit:active { transform: scale(0.92); }
+  .chip:active,
+  .compose-time-btn:active { background: var(--bg-2); }
+
+  /* The hover-bridge is desktop-only — on touch it would steal taps. */
+  .compose-bridge { pointer-events: none !important; }
+}
+
 /* =====================================================
    SHELL
    ===================================================== */
@@ -75,6 +116,10 @@ kbd {
   flex-direction: column;
   gap: clamp(40px, 5vw, 72px);
   animation: tabSlideIn 320ms cubic-bezier(.2, .8, .2, 1);
+  /* Allow vertical scroll only; horizontal handled by useSwipe (no native
+     horizontal scroll). Also blocks iOS Safari edge-swipe back/forward
+     gesture from hijacking our tab swipe. */
+  touch-action: pan-y;
 }
 @keyframes tabSlideIn {
   from { opacity: 0; transform: translateY(6px); }
@@ -923,6 +968,39 @@ kbd {
 .focus__bottom { display: none; }
 .focus__scale { display: none; }
 
+/* Mobile landscape lock — CSS rotation fallback.
+   Used when screen.orientation.lock() is unsupported (iOS Safari in browser
+   mode) or rejected. The FocusView component sets [data-rotate="true"] in
+   that case so the user can hold the phone in portrait but see the timer
+   in landscape (head tilted right). */
+.focus[data-rotate="true"] {
+  inset: auto;
+  position: fixed;
+  top: 0;
+  left: 100dvw;
+  width: 100dvh;
+  height: 100dvw;
+  transform: rotate(90deg);
+  transform-origin: top left;
+  /* Some platforms render the rotated overlay below the body — promote it. */
+  z-index: 200;
+}
+/* In rotated mode, vw refers to the (small) portrait width, so override the
+   digit/title sizing to use vh which now corresponds to the visible long
+   axis. */
+.focus[data-rotate="true"] .focus__digits {
+  font-size: calc(clamp(48px, 13vh, 200px) * var(--digit-shrink, 1));
+}
+.focus[data-rotate="true"] .focus__title {
+  font-size: clamp(20px, 3.2vh, 36px);
+}
+.focus[data-rotate="true"] .focus__progress {
+  width: min(640px, 70vh);
+}
+.focus[data-rotate="true"] .focus__sign {
+  font-size: calc(clamp(40px, 11vh, 180px) * var(--digit-shrink, 1));
+}
+
 /* =====================================================
    BOTTOM DOCK · same width pills (composer + tabbar)
    ===================================================== */
@@ -931,15 +1009,20 @@ kbd {
 .dock {
   position: fixed;
   left: 50%;
-  bottom: clamp(14px, 2.5vh, 24px);
+  /* Sits above iOS home indicator + browser bottom bar. The dvh in `.app`
+     handles the bar collapse, but Safari still occasionally paints the bar
+     over fixed elements; the safe-area-inset keeps a guaranteed gap. */
+  bottom: max(env(safe-area-inset-bottom, 0px), clamp(14px, 2.5vh, 24px));
   transform: translateX(-50%);
   z-index: 50;
-  width: min(380px, calc(100vw - 16px));
+  width: min(420px, calc(100vw - 16px));
   display: flex;
   flex-direction: column;                /* Composer above, TabBar below */
   align-items: stretch;
   gap: 8px;
   pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
 }
 .dock > * { pointer-events: auto; }
 
@@ -1347,11 +1430,15 @@ kbd {
 .compose-expand .picker { margin: 0; max-width: none; padding: 12px; }
 
 @media (max-width: 540px) {
-  .dock { bottom: 8px; }
+  /* Keep safe-area-inset; just bump min gap a bit higher for thumb reach. */
+  .dock { bottom: max(env(safe-area-inset-bottom, 0px), 10px); }
   .compose-chips { grid-template-columns: repeat(3, 1fr); }
   .compose-row { gap: 5px; padding: 8px 9px; }
   .compose-row .compose-time-btn { width: 92px; font-size: 10.5px; padding: 6px 6px; }
   .compose-row .compose-submit { padding: 6px 10px; min-width: 44px; }
+  /* Larger tap targets on the tab bar (Apple HIG = 44px minimum) */
+  .tabbar__btn-inner { padding: 10px 14px 9px; gap: 4px; }
+  .tabbar__btn-icon svg { width: 22px; height: 22px; }
 }
 
 /* =====================================================

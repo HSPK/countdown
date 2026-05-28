@@ -12,7 +12,7 @@ import {
   IconHelp, IconChevronRight, IconExternal,
 } from './Icons'
 
-const APP_VERSION = '0.26'
+const APP_VERSION = '0.27'
 
 export function SettingsTab() {
   const theme = useSettings((s) => s.theme)

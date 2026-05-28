@@ -1103,8 +1103,10 @@ kbd {
   position: relative;
   width: 1ch;
   text-align: center;
-  overflow: hidden;
   line-height: 1;
+  /* No overflow:hidden here — that would clip neon/glow text-shadows that
+     bleed past each glyph's 1ch box. The flip theme reintroduces it on
+     its own scoped rule (the card aesthetic genuinely needs clipping). */
 }
 .digits__inner {
   display: inline-block;

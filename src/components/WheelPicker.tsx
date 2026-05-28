@@ -39,16 +39,55 @@ function Column({ items, value, onChange, ariaLabel }: ColumnProps) {
   const safeIdx = idx === -1 ? 0 : idx
 
   /* On mount and whenever the externally-controlled value changes by a
-     means other than our own scroll, sync the scroll position. */
+     means other than our own scroll, sync the scroll position. We use
+     smooth scrolling so wheel-driven changes animate nicely; the very
+     first sync may briefly animate from 0 which is acceptable. */
   useEffect(() => {
     const el = ref.current
     if (!el) return
     const desired = safeIdx * ITEM_H
     if (Math.abs(el.scrollTop - desired) > 1) {
-      el.scrollTo({ top: desired, behavior: 'auto' })
+      el.scrollTo({ top: desired, behavior: 'smooth' })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [safeIdx, items.length])
+
+  /* Override wheel input. Native wheel scrolls ~100px per tick (≈2.5
+     cells) which feels jumpy on a snap-based picker. We preventDefault,
+     accumulate deltaY across events, and emit ONE step whenever the
+     threshold is crossed (with a min interval to throttle fast wheels
+     and trackpad inertia). */
+  const wheelStateRef = useRef({ safeIdx, items, onChange })
+  wheelStateRef.current = { safeIdx, items, onChange }
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    let accum = 0
+    let lastStep = 0
+    let lastWheelTime = 0
+    const THRESHOLD = 40       // px of deltaY to advance one cell
+    const MIN_INTERVAL = 70    // ms minimum between cell jumps
+
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault()
+      const now = Date.now()
+      /* Reset accumulator if user paused — avoids leftover trackpad
+         inertia silently moving the wheel later. */
+      if (now - lastWheelTime > 200) accum = 0
+      lastWheelTime = now
+      accum += e.deltaY
+      if (now - lastStep < MIN_INTERVAL) return
+      if (Math.abs(accum) < THRESHOLD) return
+      const dir = accum > 0 ? 1 : -1
+      accum = 0
+      lastStep = now
+      const { safeIdx: cur, items: list, onChange: fn } = wheelStateRef.current
+      const i = clamp(cur + dir, 0, list.length - 1)
+      if (i !== cur) fn(list[i].value)
+    }
+    el.addEventListener('wheel', onWheel, { passive: false })
+    return () => el.removeEventListener('wheel', onWheel)
+  }, [])
 
   const onScroll = () => {
     if (settleTimer.current) window.clearTimeout(settleTimer.current)

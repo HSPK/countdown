@@ -10,7 +10,9 @@
     "composite": true,
     "noEmit": false,
     "emitDeclarationOnly": true,
+    "types": ["node"],
     "outDir": "./dist-types"
   },
   "include": ["vite.config.ts"]
 }
+

@@ -1,5 +1,5 @@
-import { useRef, useState } from 'react'
-import { useTodos, selectActive } from '../store/todos'
+import { useRef } from 'react'
+import { useTodos } from '../store/todos'
 import { useSettings, THEMES, type ThemeName } from '../store/settings'
 import { useCustomThemes, parseThemeJson } from '../store/customThemes'
 import { SourceManager } from './SourceManager'
@@ -9,10 +9,10 @@ import { LOCAL_SOURCE_ID } from '../store/sources'
 import { useT, LANGS, type Lang } from '../lib/i18n'
 import {
   IconCheck, IconTrash, IconBell, IconDownload, IconUpload,
-  IconTv, IconHelp, IconChevronRight, IconExternal,
+  IconHelp, IconChevronRight, IconExternal,
 } from './Icons'
 
-const APP_VERSION = '0.25'
+const APP_VERSION = '0.26'
 
 export function SettingsTab() {
   const theme = useSettings((s) => s.theme)
@@ -31,7 +31,6 @@ export function SettingsTab() {
 
   const fileRef = useRef<HTMLInputElement>(null)
   const themeFileRef = useRef<HTMLInputElement>(null)
-  const [broadcastOpen, setBroadcastOpen] = useState(false)
 
   /* -- Data import / export -- */
   const exportLocal = () => {
@@ -171,20 +170,6 @@ export function SettingsTab() {
         />
       </Section>
 
-      {/* Broadcast / OBS */}
-      <Section title={t('settings.broadcast')}>
-        <ListRow
-          icon={<IconTv width={14} height={14} />}
-          title={t('settings.broadcast.title')}
-          desc={t('settings.broadcast.desc')}
-          right={
-            <span className="pill-toggle">{broadcastOpen ? t('settings.broadcast.close') : t('settings.broadcast.open')}</span>
-          }
-          onClick={() => setBroadcastOpen((v) => !v)}
-        />
-        {broadcastOpen && <BroadcastBuilder />}
-      </Section>
-
       {/* Import / Export */}
       <Section title={t('settings.io')}>
         <input
@@ -308,149 +293,6 @@ function ThemeChooserCard({
           <IconTrash width={11} height={11} />
         </button>
       )}
-    </div>
-  )
-}
-
-function BroadcastBuilder() {
-  const todos = useTodos(selectActive)
-  const t = useT()
-  const [todoId, setTodoId] = useState<string>(todos[0]?.id ?? 'next')
-  const [bg, setBg] = useState('theme')
-  const [font, setFont] = useState('')
-  const [accent, setAccent] = useState('')
-  const [scale, setScale] = useState('1')
-  const [showTitle, setShowTitle] = useState(true)
-
-  const base = window.location.origin + window.location.pathname
-  const sp = new URLSearchParams()
-  sp.set('broadcast', todoId)
-  if (bg !== 'theme') sp.set('bg', bg)
-  if (font) sp.set('font', font)
-  if (accent) sp.set('accent', accent)
-  if (scale !== '1') sp.set('scale', scale)
-  if (!showTitle) sp.set('title', 'hide')
-  const url = `${base}?${sp.toString()}`
-
-  return (
-    <div className="settings__inset">
-      <div className="field">
-        <span className="field__label">{t('broadcast.task')}</span>
-        <select
-          value={todoId}
-          onChange={(e) => setTodoId(e.target.value)}
-          style={{
-            padding: '9px 12px', border: '1px solid var(--hairline-strong)',
-            borderRadius: 'var(--radius-soft)', background: 'var(--bg-popover)', color: 'var(--fg)',
-            fontSize: 13, outline: 'none',
-          }}
-        >
-          <option value="next">{t('broadcast.task.next')}</option>
-          {todos.map((todo) => <option key={todo.id} value={todo.id}>{todo.title}</option>)}
-        </select>
-      </div>
-
-      <div className="field">
-        <span className="field__label">{t('broadcast.bg')}</span>
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-          {[
-            { v: 'theme',       k: 'broadcast.bg.theme' },
-            { v: 'transparent', k: 'broadcast.bg.transparent' },
-            { v: 'chroma',      k: 'broadcast.bg.chroma' },
-            { v: 'black',       k: 'broadcast.bg.black' },
-            { v: 'white',       k: 'broadcast.bg.white' },
-          ].map((o) => (
-            <button
-              key={o.v}
-              className="tag tag--filter"
-              aria-pressed={bg === o.v}
-              onClick={() => setBg(o.v)}
-            >{t(o.k)}</button>
-          ))}
-        </div>
-      </div>
-
-      <div className="field">
-        <span className="field__label">{t('broadcast.font')}</span>
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-          {[
-            { v: '',      l: t('broadcast.font.default') },
-            { v: 'sans',  l: 'Sans' },
-            { v: 'serif', l: 'Serif' },
-            { v: 'mono',  l: 'Mono' },
-          ].map((o) => (
-            <button
-              key={o.v}
-              className="tag tag--filter"
-              aria-pressed={font === o.v}
-              onClick={() => setFont(o.v)}
-            >{o.l}</button>
-          ))}
-        </div>
-      </div>
-
-      <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-        <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <span className="field__label">{t('broadcast.scale')}</span>
-          <input
-            type="number"
-            min="0.5" max="2" step="0.1"
-            value={scale}
-            onChange={(e) => setScale(e.target.value)}
-            style={{
-              width: 80, padding: '9px 12px', border: '1px solid var(--hairline-strong)',
-              borderRadius: 'var(--radius-soft)', background: 'transparent', color: 'var(--fg)',
-              fontSize: 13, fontFamily: 'var(--font-mono)', outline: 'none',
-            }}
-          />
-        </label>
-        <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <span className="field__label">{t('broadcast.accent')}</span>
-          <input
-            type="text"
-            value={accent}
-            onChange={(e) => setAccent(e.target.value)}
-            placeholder="#00F0FF"
-            style={{
-              width: 120, padding: '9px 12px', border: '1px solid var(--hairline-strong)',
-              borderRadius: 'var(--radius-soft)', background: 'transparent', color: 'var(--fg)',
-              fontSize: 13, fontFamily: 'var(--font-mono)', outline: 'none',
-            }}
-          />
-        </label>
-        <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, alignSelf: 'flex-end', paddingBottom: 9 }}>
-          <input
-            type="checkbox"
-            checked={showTitle}
-            onChange={(e) => setShowTitle(e.target.checked)}
-          />
-          {t('broadcast.title.show')}
-        </label>
-      </div>
-
-      <div className="field">
-        <span className="field__label">{t('broadcast.url')}</span>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <input
-            value={url}
-            readOnly
-            onFocus={(e) => e.target.select()}
-            style={{
-              flex: 1, padding: '9px 12px', border: '1px solid var(--hairline-strong)',
-              borderRadius: 'var(--radius-soft)', background: 'var(--bg-2)', color: 'var(--fg)',
-              fontSize: 12, fontFamily: 'var(--font-mono)', outline: 'none',
-            }}
-          />
-          <button
-            className="btn"
-            onClick={() => navigator.clipboard?.writeText(url).then(() => alert(t('common.copied')))}
-          >{t('broadcast.copy')}</button>
-          <button
-            className="btn"
-            onClick={() => window.open(url, '_blank')}
-          >{t('broadcast.preview')}</button>
-        </div>
-      </div>
     </div>
   )
 }

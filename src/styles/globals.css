@@ -1661,8 +1661,8 @@ kbd {
 .compose-time-row { display: none; }
 .compose-row .compose-time-btn {
   display: inline-flex; align-items: center; justify-content: center;
-  gap: 4px;
-  padding: 6px 8px;
+  gap: 5px;
+  padding: 6px 9px;
   border: 1px solid var(--hairline);
   border-radius: 12px;
   font-family: var(--font-mono);
@@ -1670,11 +1670,20 @@ kbd {
   color: var(--fg-2);
   transition: border-color var(--dur-fast), color var(--dur-fast), background var(--dur-fast);
   flex-shrink: 0;
-  white-space: nowrap;
-  width: 108px;
+  /* Slightly wider on desktop to comfortably hold "Tomorrow PM 18:00".
+     The label inside truncates with ellipsis if it ever overflows. */
+  width: 124px;
+  min-width: 0;
+}
+.compose-time-btn__label {
+  flex: 1 1 0;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: center;
 }
+.compose-time-btn__chev { flex-shrink: 0; }
 [data-theme="cyberpunk"] .compose-row .compose-time-btn { border-radius: 4px; }
 .compose-row .compose-time-btn:hover { border-color: var(--hairline-strong); color: var(--fg); }
 .compose-row .compose-time-btn[aria-pressed="true"] { background: var(--bg-2); color: var(--fg); }
@@ -1743,7 +1752,7 @@ kbd {
   .dock { bottom: max(env(safe-area-inset-bottom, 0px), 10px); }
   .compose-chips { grid-template-columns: repeat(3, 1fr); }
   .compose-row { gap: 5px; padding: 8px 9px; }
-  .compose-row .compose-time-btn { width: 92px; font-size: 10.5px; padding: 6px 6px; }
+  .compose-row .compose-time-btn { width: 96px; font-size: 10.5px; padding: 6px 7px; }
   .compose-row .compose-submit { padding: 6px 10px; min-width: 44px; }
   /* Larger tap targets on the tab bar (Apple HIG = 44px minimum) */
   .tabbar__btn-inner { padding: 10px 14px 9px; gap: 4px; }
@@ -2615,109 +2624,6 @@ kbd {
   }
   .cyber-bg::after { display: none; }
 }
-
-/* =====================================================
-   BROADCAST · OBS / projector mode
-   ===================================================== */
-.bcast {
-  position: fixed; inset: 0;
-  width: 100vw; height: 100vh;
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  gap: clamp(20px, 3vh, 48px);
-  padding: 4vw;
-  font-family: var(--font-digits);
-  background: var(--bg);
-  color: var(--fg);
-  overflow: hidden;
-  /* Use --bcast-accent if user passes &accent=#fff */
-}
-.bcast__title {
-  font-family: var(--font-display);
-  font-weight: 500;
-  font-size: calc(clamp(20px, 2.6vw, 36px) * var(--bcast-scale, 1));
-  letter-spacing: -0.01em;
-  text-align: center;
-  color: inherit;
-  opacity: .72;
-  max-width: 80vw;
-}
-[data-theme="paper"] .bcast__title { font-style: italic; font-family: var(--font-serif); }
-[data-theme="cyberpunk"] .bcast__title { text-transform: uppercase; letter-spacing: 0.16em; opacity: .8; }
-
-.bcast__digits-wrap {
-  display: flex; align-items: baseline; justify-content: center;
-  gap: clamp(6px, 1vw, 24px);
-}
-.bcast__sign {
-  font-weight: var(--digit-weight);
-  font-size: calc(clamp(48px, 12vw, 200px) * var(--bcast-scale, 1));
-  color: var(--bcast-accent, var(--u-critical));
-  line-height: .92;
-  letter-spacing: var(--digit-tracking);
-}
-.bcast__digits {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr auto 1fr auto 1fr;
-  align-items: baseline;
-  gap: clamp(2px, 0.6vw, 16px);
-  font-weight: var(--digit-weight);
-  font-size: calc(clamp(56px, 17vw, 320px) * var(--bcast-scale, 1));
-  line-height: .9;
-  letter-spacing: var(--digit-tracking);
-  font-variant-numeric: tabular-nums;
-  color: inherit;
-  width: min(1500px, 92vw);
-}
-[data-theme="cyberpunk"] .bcast__digits {
-  color: var(--bcast-accent, var(--accent));
-  text-shadow:
-    0 0 calc(34px * var(--bcast-scale, 1)) var(--bcast-accent, var(--accent)),
-    0 0 8px var(--bcast-accent, var(--accent));
-}
-.bcast__digits--overdue {
-  color: var(--bcast-accent, var(--u-critical));
-}
-[data-theme="cyberpunk"] .bcast__digits--overdue {
-  color: var(--bcast-accent, var(--u-critical));
-  text-shadow:
-    0 0 calc(34px * var(--bcast-scale, 1)) var(--bcast-accent, var(--u-critical)),
-    0 0 8px var(--bcast-accent, var(--u-critical));
-}
-.bcast__seg {
-  display: flex; flex-direction: column; align-items: center;
-  gap: clamp(4px, 0.8vw, 14px);
-  min-width: 0;
-}
-.bcast__seg > span:first-child { text-align: center; }
-.bcast__label {
-  font-family: var(--font-sans);
-  font-weight: 500;
-  font-size: calc(clamp(10px, .9vw, 14px) * var(--bcast-scale, 1));
-  letter-spacing: 0.28em;
-  text-transform: uppercase;
-  color: inherit; opacity: .55;
-}
-[data-theme="paper"] .bcast__label { font-family: var(--font-serif); font-style: italic; text-transform: lowercase; letter-spacing: 0.02em; }
-.bcast__sep {
-  color: inherit; opacity: .25;
-  font-size: .35em; align-self: center; margin-bottom: .35em;
-  text-align: center;
-}
-.bcast__meta {
-  font-family: var(--font-mono);
-  font-size: calc(clamp(12px, 1.1vw, 16px) * var(--bcast-scale, 1));
-  color: inherit; opacity: .55;
-  letter-spacing: 0.06em;
-  text-align: center;
-}
-[data-theme="paper"] .bcast__meta { font-family: var(--font-serif); font-style: italic; letter-spacing: 0; }
-
-/* Chroma + transparent backdrops imply user-supplied chrome */
-.bcast[data-bg="chroma"] { color: #FFFFFF; }
-.bcast[data-bg="black"] { color: #FFFFFF; }
-.bcast[data-bg="white"] { color: #0A0A0A; }
-.bcast[data-bg="transparent"] { background: transparent !important; }
 
 /* =====================================================
    HELP / DOC PAGE — paginated editorial

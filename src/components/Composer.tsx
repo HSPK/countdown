@@ -310,8 +310,8 @@ export function Composer({ inputRef }: Props) {
           onClick={(e) => { e.stopPropagation() }}
           title={currentLabel}
         >
-          {currentLabel}
-          <IconChevronDown width={11} height={11} />
+          <span className="compose-time-btn__label">{currentLabel}</span>
+          <IconChevronDown width={11} height={11} className="compose-time-btn__chev" />
         </button>
         <button
           type="button"

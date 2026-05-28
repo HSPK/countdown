@@ -134,32 +134,6 @@ const SECTIONS_EN: HelpSection[] = [
     ),
   },
   {
-    id: 'broadcast',
-    title: 'Broadcast / OBS',
-    intro: 'URL-parameterized fullscreen countdown overlay',
-    body: () => (
-      <>
-        <p>
-          The standalone URL <code>?broadcast=&lt;todoId&gt;</code> renders a chrome-free
-          fullscreen countdown — drop it into OBS / vMix as a <em>browser source</em>.
-        </p>
-        <p>All parameters:</p>
-        <table className="help-table">
-          <tbody>
-            <tr><td><code>broadcast</code></td><td>task id, or <code>next</code> (auto-follow next DDL)</td></tr>
-            <tr><td><code>theme</code></td><td><code>mono-light</code> / <code>mono-dark</code> / <code>paper</code> / <code>cyberpunk</code> / <code>flip</code></td></tr>
-            <tr><td><code>bg</code></td><td><code>theme</code> / <code>transparent</code> / <code>chroma</code> (green) / <code>black</code> / <code>white</code> / <code>#hex</code></td></tr>
-            <tr><td><code>font</code></td><td><code>sans</code> / <code>serif</code> / <code>mono</code></td></tr>
-            <tr><td><code>accent</code></td><td><code>#hex</code> override for the digit color</td></tr>
-            <tr><td><code>scale</code></td><td><code>0.5 – 2</code> font-size multiplier</td></tr>
-            <tr><td><code>title</code></td><td><code>show</code> (default) / <code>hide</code></td></tr>
-          </tbody>
-        </table>
-        <p>Settings → Broadcast · OBS has a built-in generator that builds and copies the URL.</p>
-      </>
-    ),
-  },
-  {
     id: 'notifications',
     title: 'Desktop notifications',
     intro: '1h before / 10m before / due moment',
@@ -333,32 +307,6 @@ const SECTIONS_ZH: HelpSection[] = [
           <li>时间字段接受毫秒数字或 ISO 8601 字符串</li>
           <li>订阅源需要开启 CORS 才能被浏览器抓取</li>
         </ul>
-      </>
-    ),
-  },
-  {
-    id: 'broadcast',
-    title: '直播大屏 / OBS',
-    intro: 'URL 参数化的全屏倒计时叠加',
-    body: () => (
-      <>
-        <p>
-          单独的 URL <code>?broadcast=&lt;todoId&gt;</code> 进入全屏倒计时模式，无任何 UI 控件，可作为
-          <em>浏览器源</em> 嵌入 OBS / vMix。
-        </p>
-        <p>所有可用参数：</p>
-        <table className="help-table">
-          <tbody>
-            <tr><td><code>broadcast</code></td><td>任务 ID 或 <code>next</code>（最近 DDL，动态跟随）</td></tr>
-            <tr><td><code>theme</code></td><td><code>mono-light</code> / <code>mono-dark</code> / <code>paper</code> / <code>cyberpunk</code> / <code>flip</code></td></tr>
-            <tr><td><code>bg</code></td><td><code>theme</code> / <code>transparent</code> / <code>chroma</code>（绿幕）/ <code>black</code> / <code>white</code> / <code>#hex</code></td></tr>
-            <tr><td><code>font</code></td><td><code>sans</code> / <code>serif</code> / <code>mono</code></td></tr>
-            <tr><td><code>accent</code></td><td><code>#hex</code> 覆盖数字颜色</td></tr>
-            <tr><td><code>scale</code></td><td><code>0.5 ~ 2</code> 字号倍率</td></tr>
-            <tr><td><code>title</code></td><td><code>show</code>（默认）/ <code>hide</code></td></tr>
-          </tbody>
-        </table>
-        <p>设置 → 直播大屏 · OBS 内嵌生成器可直接生成并复制 URL。</p>
       </>
     ),
   },

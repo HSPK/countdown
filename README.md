@@ -9,8 +9,7 @@
 - **Home / All / Settings** — three-tab editorial list
 - **5 built-in themes** — Mono Light / Mono Dark / Paper / Cyberpunk / Flip Clock; custom themes load from JSON
 - **i18n** — English (default) and 中文; switch in Settings
-- **9-chapter manual** — built-in docs with coordinate-style pagination
-- **Broadcast (OBS)** — `?broadcast=<id>&bg=chroma|transparent|...` embed URL for live overlays
+- **8-chapter manual** — built-in docs with coordinate-style pagination
 - **Wheel date picker** with lunar calendar (农历) display
 - **Recurring tasks** — daily / weekly / monthly / custom cron, each occurrence rendered as its own row
 - **Subscription sources** — remote JSON sources (read-only) alongside local todos; import / export JSON

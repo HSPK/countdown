@@ -1,7 +1,6 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App'
-import { BroadcastView } from './components/BroadcastView'
 import { useSettings, THEMES, type ThemeName } from './store/settings'
 import './styles/globals.css'
 
@@ -15,14 +14,9 @@ try {
 
 document.documentElement.setAttribute('data-theme', useSettings.getState().theme)
 
-const params = new URLSearchParams(window.location.search)
-const broadcastId = params.get('broadcast')
-
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    {broadcastId
-      ? <BroadcastView todoId={broadcastId} />
-      : <App />}
+    <App />
   </StrictMode>,
 )
 

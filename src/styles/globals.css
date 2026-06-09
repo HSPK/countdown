@@ -39,7 +39,7 @@ button, a, [role="button"], [role="tab"], [role="radio"], [role="switch"],
 .row, .toc-item, .hig-row, .hig-icon-btn, .theme-tile, .sound-chip,
 .tabbar__btn, .row__action, .focus__top-btn, .calendar__day, .cal__day,
 .chip, .tag__x, .help__back, .help__toc-btn,
-.help__nav-btn, .help__dot, .new-task-btn {
+.help__nav-btn, .help__dot, .fab {
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
 }
@@ -81,13 +81,12 @@ kbd {
   .focus__top-btn:active,
   .hig-icon-btn:not(:disabled):active,
   .theme-tile:active,
-  .new-task-btn:active,
   .tag--filter:active {
     background: var(--bg-2);
   }
   .chip:active { background: var(--bg-2); }
   .cal__day:active:not(.cal__day--selected) { background: var(--bg-2); }
-  .new-task-btn:active { transform: scale(0.98); }
+  .fab:active { transform: scale(0.96); }
 }
 
 /* =====================================================
@@ -305,58 +304,6 @@ kbd {
 /* =====================================================
    COMPOSER (new task)
    ===================================================== */
-.composer {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  padding-top: 4px;
-}
-.composer__row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 0;
-  border-top: 1px solid var(--hairline-strong);
-  border-bottom: 1px solid var(--hairline-strong);
-}
-.composer__plus {
-  width: 22px; height: 22px;
-  display: inline-flex; align-items: center; justify-content: center;
-  color: var(--fg-muted);
-  flex-shrink: 0;
-}
-.composer__input {
-  flex: 1;
-  background: none;
-  border: none;
-  outline: none;
-  font-size: clamp(15px, 1.4vw, 17px);
-  font-family: var(--font-body);
-  color: var(--fg);
-  padding: 4px 0;
-  min-width: 0;
-}
-.composer__input::placeholder { color: var(--fg-muted); }
-.composer__submit {
-  font-size: 13px;
-  font-weight: 600;
-  padding: 8px 16px;
-  border-radius: var(--radius-soft);
-  background: var(--accent);
-  color: var(--on-accent);
-  transition: opacity var(--dur-fast);
-  flex-shrink: 0;
-}
-.composer__submit:disabled { opacity: .2; cursor: not-allowed; }
-[data-theme="cyberpunk"] .composer__submit { color: var(--on-accent); font-family: var(--font-display); letter-spacing: .1em; text-transform: uppercase; }
-[data-theme="paper"] .composer__submit { font-style: italic; font-weight: 600; }
-
-.composer__chips {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-  padding: 0 32px;
-}
 .chip {
   display: inline-flex;
   flex-direction: column;
@@ -482,28 +429,23 @@ kbd {
 /* Row */
 .row {
   display: grid;
-  /* Single clamped value — NOT minmax — so every row in a list uses the
-     identical time-column width. minmax allows each grid (each `.row`)
-     to size independently based on its own content, which makes titles
-     start at different x-positions across rows. */
-  grid-template-columns: clamp(78px, 11vw, 132px) 1fr auto;
+  grid-template-columns: 22px 1fr auto auto;
   align-items: center;
-  gap: clamp(12px, 2vw, 28px);
-  padding: 14px 14px;
-  margin: 0 -14px;
-  border-radius: 10px;
+  gap: 12px;
+  padding: 12px 12px;
+  margin: 0 -12px;
+  border-radius: 12px;
   cursor: pointer;
   transition: background var(--dur-fast);
   position: relative;
+  min-height: 56px;
 }
-/* Inset hairline between rows — sits inside the safe area so it never
-   collides with the hover background's rounded corners. */
+[data-theme="cyberpunk"] .row { border-radius: 4px; }
 .row + .row::before {
   content: '';
   position: absolute;
   top: -1px;
-  left: 16px;
-  right: 16px;
+  left: 46px; right: 16px;
   height: 1px;
   background: var(--hairline);
   pointer-events: none;
@@ -512,49 +454,57 @@ kbd {
 .row:hover::before,
 .row:hover + .row::before { opacity: 0; }
 .row:hover { background: var(--bg-2); z-index: 1; }
-.row:focus-visible { background: var(--bg-2); outline-offset: -2px; }
+.row:focus-visible { background: var(--bg-2); outline: 2px solid var(--accent); outline-offset: -2px; }
 .row[data-completed="true"] { opacity: .55; }
-.row[data-completed="true"] .row__title { text-decoration: line-through; text-decoration-color: var(--fg-muted); }
-
-.row__time {
-  font-family: var(--font-digits);
-  font-weight: var(--digit-weight);
-  font-size: clamp(18px, 1.8vw, 22px);
-  letter-spacing: var(--digit-tracking);
-  color: var(--fg);
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
+.row[data-completed="true"] .row__title {
+  text-decoration: line-through;
+  text-decoration-color: var(--fg-muted);
 }
-.row__time--soon     { color: var(--u-soon); }
-.row__time--critical { color: var(--u-critical); }
-.row__time--overdue  { color: var(--u-critical); }
-[data-theme="cyberpunk"] .row__time { color: var(--accent); }
-[data-theme="cyberpunk"] .row__time--soon     { color: var(--u-soon); }
-[data-theme="cyberpunk"] .row__time--critical,
-[data-theme="cyberpunk"] .row__time--overdue  { color: var(--u-critical); }
 
-.row__main { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+/* Circular HIG checkbox */
+.row__check {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  border: 1.5px solid var(--hairline-strong);
+  background: transparent;
+  display: inline-flex;
+  align-items: center; justify-content: center;
+  color: var(--on-accent);
+  transition: background var(--dur-fast), border-color var(--dur-fast);
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+}
+.row__check:hover { border-color: var(--fg-muted); }
+.row__check--on {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.row__check--readonly { opacity: 0.3; cursor: default; }
+[data-theme="cyberpunk"] .row__check { border-radius: 3px; }
+[data-theme="cyberpunk"] .row__check--on { box-shadow: 0 0 8px var(--accent); }
+
+.row__main { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .row__title-wrap {
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 6px;
   min-width: 0;
 }
 .row__title-icon {
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
-  color: var(--accent);
-  opacity: .9;
+  color: var(--fg-muted);
 }
 [data-theme="cyberpunk"] .row__title-icon { color: var(--accent); text-shadow: 0 0 6px var(--accent); }
 .row__title {
   font-family: var(--font-display);
   font-weight: 500;
-  font-size: clamp(15px, 1.4vw, 17px);
+  font-size: 14.5px;
   color: var(--fg);
   line-height: 1.3;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.005em;
   margin: 0;
   min-width: 0;
   flex: 1;
@@ -562,27 +512,46 @@ kbd {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-[data-theme="paper"] .row__title { font-style: italic; font-weight: 500; }
+[data-theme="paper"] .row__title { font-style: italic; font-weight: 500; font-size: 16px; }
 [data-theme="cyberpunk"] .row__title { font-family: var(--font-body); }
 
 .row__sub {
-  font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 11.5px;
   color: var(--fg-muted);
-  letter-spacing: 0;
-  font-variant-numeric: tabular-nums;
-  display: flex; align-items: center;
+  display: inline-flex;
   flex-wrap: wrap;
-  gap: 6px;
-  row-gap: 4px;
+  align-items: baseline;
+  gap: 8px;
+  line-height: 1.3;
   min-width: 0;
 }
-.row__sub-sep {
-  opacity: .45;
-  user-select: none;
+.row__sub-time {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.005em;
 }
-.row__pin { color: var(--accent); }
-[data-theme="cyberpunk"] .row__pin { color: var(--accent); text-shadow: 0 0 8px var(--accent); }
+.row__sub .tag {
+  font-size: 10.5px;
+  padding: 1px 6px;
+}
+
+/* Big trailing countdown text */
+.row__count {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--fg);
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  text-align: right;
+}
+.row__count--soon     { color: var(--u-soon); }
+.row__count--critical { color: var(--u-critical); }
+.row__count--overdue  { color: var(--u-critical); }
+[data-theme="cyberpunk"] .row__count--soon     { color: var(--u-soon); }
+[data-theme="cyberpunk"] .row__count--critical,
+[data-theme="cyberpunk"] .row__count--overdue  { color: var(--u-critical); }
 
 .row__actions {
   display: inline-flex;
@@ -593,12 +562,13 @@ kbd {
 .row:hover .row__actions,
 .row:focus-within .row__actions { opacity: 1; }
 .row__action {
-  width: 30px; height: 30px;
+  width: 28px; height: 28px;
   display: inline-flex; align-items: center; justify-content: center;
-  border-radius: var(--radius-soft);
+  border-radius: 8px;
   color: var(--fg-muted);
   transition: color var(--dur-fast), background var(--dur-fast);
 }
+[data-theme="cyberpunk"] .row__action { border-radius: 3px; }
 .row__action:hover { color: var(--fg); background: var(--bg); }
 .row__action--danger:hover { color: var(--u-critical); }
 
@@ -655,13 +625,10 @@ kbd {
 .row-menu__item--danger .row-menu__icon { color: var(--u-critical); }
 
 @media (max-width: 600px) {
-  /* Inherit the clamped time-column from the base rule so titles stay
-     aligned. Only tweak gap / padding / time font here. */
-  .row { gap: 12px; padding: 14px 10px; margin: 0 -10px; }
-  .row__time { font-size: 15px; }
+  .row { gap: 10px; padding: 12px 10px; margin: 0 -10px; min-height: 60px; }
+  .row__count { font-size: 13px; }
   .row:hover { background: var(--bg-2); }
   .row__actions { opacity: 1; }
-  /* Wider tap targets for the two remaining buttons */
   .row__action { width: 36px; height: 36px; }
 }
 
@@ -1235,24 +1202,28 @@ kbd {
 }
 .tag__x:hover { color: var(--fg); background: var(--bg-2); }@media (max-width: 540px) {}
 
-/* Quick-chip family (used inside ComposerSheet) */
+/* Quick-chip family (used inside ComposerSheet) — soft pill style */
 .chip--rel {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 8px 6px;
-  border: 1px solid var(--hairline);
+  padding: 9px 8px;
+  border: none;
   border-radius: 10px;
-  background: transparent;
-  color: var(--fg-2);
+  background: var(--bg-2);
+  color: var(--fg);
   font-family: var(--font-mono);
-  font-size: 12px;
-  transition: background var(--dur-fast), color var(--dur-fast), border-color var(--dur-fast);
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  transition: background var(--dur-fast), color var(--dur-fast), transform var(--dur-fast);
 }
 [data-theme="cyberpunk"] .chip--rel { border-radius: 3px; }
-.chip--rel:hover { border-color: var(--hairline-strong); color: var(--fg); }
+.chip--rel:hover { background: var(--bg); }
+.chip--rel.chip--active,
 .chip--rel[aria-pressed="true"] {
-  background: var(--accent); color: var(--on-accent); border-color: var(--accent);
+  background: var(--accent); color: var(--on-accent);
 }
 
 /* Absolute chips — label + sub time */
@@ -1261,26 +1232,30 @@ kbd {
   flex-direction: column;
   align-items: flex-start;
   gap: 2px;
-  padding: 6px 9px;
-  border: 1px solid var(--hairline);
+  padding: 8px 11px;
+  border: none;
   border-radius: 10px;
-  background: transparent;
-  color: var(--fg-2);
+  background: var(--bg-2);
+  color: var(--fg);
   line-height: 1.2;
-  transition: background var(--dur-fast), color var(--dur-fast), border-color var(--dur-fast);
+  transition: background var(--dur-fast), color var(--dur-fast), transform var(--dur-fast);
 }
 [data-theme="cyberpunk"] .chip--abs { border-radius: 3px; }
-.chip--abs:hover { border-color: var(--hairline-strong); color: var(--fg); }
+.chip--abs:hover { background: var(--bg); }
+.chip--abs.chip--active,
 .chip--abs[aria-pressed="true"] {
-  background: var(--accent); color: var(--on-accent); border-color: var(--accent);
+  background: var(--accent); color: var(--on-accent);
 }
 .chip--abs .chip__label { font-size: 12.5px; font-weight: 500; }
 .chip--abs .chip__time {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  font-size: 10.5px;
   color: var(--fg-muted);
+  letter-spacing: -0.01em;
 }
-.chip--abs[aria-pressed="true"] .chip__time { color: inherit; opacity: .7; }
+.chip--abs.chip--active .chip__time,
+.chip--abs[aria-pressed="true"] .chip__time { color: inherit; opacity: .75; }
 
 /* Custom toggle chip (opens the inline Custom picker) */
 .chip--custom {
@@ -1288,24 +1263,26 @@ kbd {
   align-items: center;
   justify-content: center;
   gap: 5px;
-  padding: 7px 8px;
-  border: 1px dashed var(--hairline-strong);
+  padding: 9px 10px;
+  border: none;
   border-radius: 10px;
-  background: transparent;
+  background: var(--bg-2);
   color: var(--fg-2);
-  font-size: 12px;
-  transition: background var(--dur-fast), color var(--dur-fast), border-color var(--dur-fast), border-style var(--dur-fast);
+  font-size: 12.5px;
+  font-weight: 500;
+  transition: background var(--dur-fast), color var(--dur-fast);
 }
 [data-theme="cyberpunk"] .chip--custom { border-radius: 3px; }
-.chip--custom:hover { border-color: var(--accent); color: var(--fg); }
-.chip--custom.chip--active, .chip--custom[aria-pressed="true"] {
-  background: var(--bg-2); color: var(--fg);
-  border-style: solid;
-  border-color: var(--accent);
+.chip--custom:hover { background: var(--bg); color: var(--fg); }
+.chip--custom.chip--active,
+.chip--custom[aria-pressed="true"] {
+  background: color-mix(in srgb, var(--accent) 15%, var(--bg-2));
+  color: var(--accent);
 }
 @media (max-width: 540px) {
   /* Keep safe-area-inset; just bump min gap a bit higher for thumb reach. */
-  .dock { bottom: max(env(safe-area-inset-bottom, 0px), 10px); }  /* Larger tap targets on the tab bar (Apple HIG = 44px minimum) */
+  .dock { bottom: max(env(safe-area-inset-bottom, 0px), 10px); }
+  /* Larger tap targets on the tab bar (Apple HIG = 44px minimum) */
   .tabbar__btn-inner { padding: 10px 14px 9px; gap: 4px; }
   .tabbar__btn-icon svg { width: 22px; height: 22px; }
 }
@@ -2988,39 +2965,38 @@ kbd {
 }
 
 /* ─────────────────────────────────────────────
-   NewTaskButton — accent pill that opens the ComposerSheet
+   Floating action button (FAB) — opens ComposerSheet
    ───────────────────────────────────────────── */
-.new-task-btn {
-  width: 100%;
+.fab {
+  position: fixed;
+  /* Sit above the dock + safe-area + give breathing room from the tabbar */
+  right: max(env(safe-area-inset-right, 0px), 20px);
+  bottom: calc(
+    max(env(safe-area-inset-bottom, 0px), clamp(14px, 2.5vh, 24px))
+    + 64px /* tabbar height */
+    + 12px /* gap */
+  );
+  z-index: 60;
+  width: 52px; height: 52px;
+  border-radius: 50%;
   display: inline-flex;
   align-items: center; justify-content: center;
-  gap: 8px;
-  padding: 12px 18px;
   background: var(--accent);
   color: var(--on-accent);
   border: none;
-  border-radius: 28px;
-  font-family: var(--font-display);
-  font-size: 14.5px;
-  font-weight: 600;
-  letter-spacing: -0.005em;
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.10), 0 1px 0 var(--hairline);
-  transition: transform var(--dur-fast), box-shadow var(--dur-fast), filter var(--dur-fast);
+  box-shadow:
+    0 14px 36px rgba(0, 0, 0, 0.18),
+    0 2px 6px rgba(0, 0, 0, 0.08);
   cursor: pointer;
+  transition: transform var(--dur-fast) var(--ease), box-shadow var(--dur-fast), filter var(--dur-fast);
 }
-[data-theme="cyberpunk"] .new-task-btn {
-  border-radius: 6px;
-  box-shadow: 0 0 24px rgba(0, 240, 255, 0.30);
+[data-theme="cyberpunk"] .fab {
+  border-radius: 8px;
+  box-shadow: 0 0 28px rgba(0, 240, 255, 0.45);
 }
-[data-theme="paper"] .new-task-btn { font-style: italic; font-weight: 500; font-size: 16px; }
-.new-task-btn:hover { transform: translateY(-1px); filter: brightness(1.04); }
-.new-task-btn:active { transform: translateY(0); }
-.new-task-btn__icon {
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 18px; height: 18px;
-  border-radius: 50%;
-  background: color-mix(in srgb, var(--on-accent) 18%, transparent);
-}
+.fab:hover { transform: translateY(-2px); filter: brightness(1.06); }
+.fab:active { transform: translateY(0) scale(0.96); }
+.fab:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 40%, transparent); outline-offset: 3px; }
 
 /* ─────────────────────────────────────────────
    ComposerSheet — modal layout for the new-task form
@@ -3071,4 +3047,55 @@ kbd {
   display: flex; flex-direction: column;
   gap: 10px;
   padding: 4px 0 0;
+}
+
+/* ─────────────────────────────────────────────
+   EditModal · clean HIG form (v0.33)
+   ───────────────────────────────────────────── */
+.edit__title-clean {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 22px;
+  letter-spacing: -0.02em;
+  color: var(--fg);
+  background: transparent;
+  border: none;
+  outline: none;
+  padding: 8px 2px 4px;
+  width: 100%;
+  line-height: 1.25;
+}
+.edit__title-clean::placeholder { color: var(--fg-muted); }
+.edit__title-clean:focus { outline: none; }
+[data-theme="paper"] .edit__title-clean { font-style: italic; font-weight: 500; font-size: 26px; }
+[data-theme="cyberpunk"] .edit__title-clean {
+  font-family: var(--font-mono); font-weight: 600; color: var(--accent);
+  text-shadow: 0 0 8px color-mix(in srgb, var(--accent) 50%, transparent);
+}
+
+.edit__notes-clean {
+  width: 100%;
+  resize: vertical;
+  background: var(--bg-2);
+  border: 1px solid var(--hairline);
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-family: var(--font-body);
+  font-size: 13.5px;
+  color: var(--fg);
+  line-height: 1.5;
+  outline: none;
+  transition: border-color var(--dur-fast), background var(--dur-fast);
+  min-height: 72px;
+}
+[data-theme="cyberpunk"] .edit__notes-clean { border-radius: 4px; }
+.edit__notes-clean::placeholder { color: var(--fg-muted); }
+.edit__notes-clean:focus { border-color: var(--accent); }
+
+/* Inline expand body for Collapsible-wrapped text fields (Tags / Repeat) */
+.edit__inline {
+  padding: 14px 16px 18px;
+  display: flex; flex-direction: column;
+  gap: 10px;
+  background: var(--bg);
 }

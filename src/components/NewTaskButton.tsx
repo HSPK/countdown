@@ -5,22 +5,20 @@ interface Props {
   onPress: () => void
 }
 
-/* Primary "+ New task" action that lives in the bottom dock. Replaces
-   the old hover-expand composer pill. Single clear tap target. */
+/* Floating action button (FAB) for adding a new task. Sits at the
+   bottom-right above the safe area, never competes with the TabBar for
+   visual weight. Apple Calendar / Things pattern. */
 export function NewTaskButton({ onPress }: Props) {
   const t = useT()
   return (
     <button
       type="button"
-      className="new-task-btn"
+      className="fab"
       onClick={onPress}
       aria-label={t('composer.add')}
       title={t('composer.add.hint')}
     >
-      <span className="new-task-btn__icon" aria-hidden>
-        <IconPlus width={14} height={14} />
-      </span>
-      <span className="new-task-btn__label">{t('composer.button.label')}</span>
+      <IconPlus width={22} height={22} />
     </button>
   )
 }

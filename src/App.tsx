@@ -109,9 +109,10 @@ export default function App() {
       </main>
 
       <div className="dock">
-        {tab !== 'settings' && <NewTaskButton onPress={() => setComposeOpen(true)} />}
         <TabBar />
       </div>
+
+      {tab !== 'settings' && <NewTaskButton onPress={() => setComposeOpen(true)} />}
 
       <ComposerSheet open={composeOpen} onClose={() => setComposeOpen(false)} />
       <FocusView />

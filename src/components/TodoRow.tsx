@@ -30,6 +30,8 @@ interface Props {
   occurrenceDeadline?: number
 }
 
+/* Apple Reminders-style row: leading circular check · title + thin
+   subtitle · trailing countdown text + ⋯ overflow menu. */
 export function TodoRow({ todo, onEdit, showSource, occurrenceDeadline }: Props) {
   const now = useNow()
   const t = useT()
@@ -87,6 +89,11 @@ export function TodoRow({ todo, onEdit, showSource, occurrenceDeadline }: Props)
     if (e.key === ' ') { e.preventDefault(); onCheck() }
   }
 
+  const urgencyClass = overdue ? ' row__time--overdue'
+    : u === 'critical' ? ' row__time--critical'
+    : u === 'soon'     ? ' row__time--soon'
+    : ''
+
   return (
     <div
       className="row"
@@ -97,22 +104,25 @@ export function TodoRow({ todo, onEdit, showSource, occurrenceDeadline }: Props)
       onClick={onRowClick}
       onKeyDown={onRowKey}
     >
-      <div
-        className={
-          'row__time' +
-          (overdue ? ' row__time--overdue' :
-            u === 'critical' ? ' row__time--critical' :
-              u === 'soon' ? ' row__time--soon' : '')
-        }
-      >
-        {todo.completedAt ? t('row.done') : formatRowTime(remaining)}
-      </div>
+      {!isExternal ? (
+        <button
+          type="button"
+          className={'row__check' + (todo.completedAt ? ' row__check--on' : '')}
+          aria-label={todo.completedAt ? t('row.uncomplete') : t('row.complete')}
+          title={todo.completedAt ? t('row.uncomplete') : isVirtual ? t('row.complete.once') : t('row.complete.hint')}
+          onClick={(e) => { e.stopPropagation(); onCheck() }}
+        >
+          {todo.completedAt && <IconCheck width={12} height={12} />}
+        </button>
+      ) : (
+        <span className="row__check row__check--readonly" aria-hidden />
+      )}
 
       <div className="row__main">
         <div className="row__title-wrap">
           {todo.pinned && !isVirtual && (
             <span className="row__title-icon" aria-label={t('row.pinned')} title={t('row.pinned')}>
-              <IconStarFill width={12} height={12} />
+              <IconStarFill width={11} height={11} />
             </span>
           )}
           {todo.recurrence && todo.recurrence !== 'none' && (
@@ -121,48 +131,33 @@ export function TodoRow({ todo, onEdit, showSource, occurrenceDeadline }: Props)
               aria-label={t('row.recurring')}
               title={`${t('row.recurring')} · ${t(RECURRENCE_LABEL_KEYS[todo.recurrence] ?? '')}`}
             >
-              <IconRepeat width={12} height={12} />
+              <IconRepeat width={11} height={11} />
             </span>
           )}
           <span className="row__title">{todo.title}</span>
         </div>
         <div className="row__sub">
-          <span>{formatHM(effectiveDeadline)}</span>
+          <span className="row__sub-time">{formatHM(effectiveDeadline)}</span>
           {todo.recurrence && todo.recurrence !== 'none' && (
-            <>
-              <span className="row__sub-sep" aria-hidden>·</span>
-              <span>{t(RECURRENCE_LABEL_KEYS[todo.recurrence])}</span>
-            </>
+            <span>{t(RECURRENCE_LABEL_KEYS[todo.recurrence])}</span>
           )}
           {todo.tags.length > 0 && (
-            <>
-              <span className="row__sub-sep" aria-hidden>·</span>
-              <span className="row__sub-tags">
-                {todo.tags.slice(0, 3).map((tag) => <span key={tag} className="tag">#{tag}</span>)}
-                {todo.tags.length > 3 && <span className="tag row__sub-tags-more">+{todo.tags.length - 3}</span>}
-              </span>
-            </>
+            <span className="row__sub-tags">
+              {todo.tags.slice(0, 3).map((tag) => <span key={tag} className="tag">#{tag}</span>)}
+              {todo.tags.length > 3 && <span className="tag row__sub-tags-more">+{todo.tags.length - 3}</span>}
+            </span>
           )}
           {showSource && source && source.id !== 'local' && (
-            <>
-              <span className="row__sub-sep" aria-hidden>·</span>
-              <span className="src" title={source.url}>{source.name}</span>
-            </>
+            <span className="src" title={source.url}>{source.name}</span>
           )}
         </div>
       </div>
 
+      <div className={'row__count' + urgencyClass}>
+        {todo.completedAt ? t('row.done') : formatRowTime(remaining)}
+      </div>
+
       <div className="row__actions" onClick={(e) => e.stopPropagation()}>
-        {!isExternal && (
-          <button
-            className="row__action"
-            aria-label={todo.completedAt ? t('row.uncomplete') : t('row.complete')}
-            title={todo.completedAt ? t('row.uncomplete') : isVirtual ? t('row.complete.once') : t('row.complete.hint')}
-            onClick={onCheck}
-          >
-            <IconCheck />
-          </button>
-        )}
         {!isExternal && <RowMenu items={menuItems} label={t('row.more')} />}
       </div>
     </div>

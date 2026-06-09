@@ -28,6 +28,11 @@ function parseTagsText(text: string): string[] {
   ))
 }
 
+function recurrenceShort(r: Recurrence, t: ReturnType<typeof useT>): string {
+  if (!r || r === 'none') return t('recurrence.none')
+  return t(`recurrence.${r}`)
+}
+
 export function EditModal({ todo, onClose }: Props) {
   const updateTodo = useTodos((s) => s.updateTodo)
   const t = useT()
@@ -40,6 +45,8 @@ export function EditModal({ todo, onClose }: Props) {
   const [recurrence, setRecurrence] = useState<Recurrence>('none')
   const [cronExpr, setCronExpr] = useState('')
   const [reminders, setReminders] = useState<ReminderConfig[] | undefined>(undefined)
+  const [showRepeat, setShowRepeat] = useState(false)
+  const [showTags, setShowTags] = useState(false)
   const [showDeadlinePicker, setShowDeadlinePicker] = useState(false)
   const [showCreatedAt, setShowCreatedAt] = useState(false)
 
@@ -54,6 +61,8 @@ export function EditModal({ todo, onClose }: Props) {
     setRecurrence(todo.recurrence ?? 'none')
     setCronExpr(todo.cronExpr ?? '')
     setReminders(todo.reminders)
+    setShowRepeat(false)
+    setShowTags(false)
     setShowDeadlinePicker(false)
     setShowCreatedAt(false)
   }, [todo])
@@ -81,6 +90,10 @@ export function EditModal({ todo, onClose }: Props) {
   useSaveShortcut(save, open)
 
   if (!todo) return null
+
+  const tagsSummary = tags.length
+    ? tags.slice(0, 4).map((tag) => `#${tag}`).join(' ') + (tags.length > 4 ? ' …' : '')
+    : t('edit.tags.empty')
 
   return createPortal(
     <div
@@ -122,35 +135,57 @@ export function EditModal({ todo, onClose }: Props) {
           {tab === 'details' ? (
             <>
               <input
-                className="edit__title"
+                className="edit__title-clean"
                 value={title}
                 placeholder={t('edit.title.input')}
                 onChange={(e) => setTitle(e.target.value)}
               />
 
-              <div className="edit__field">
-                <label className="edit__label">{t('edit.tags')}</label>
-                <input
-                  className="edit__input"
-                  value={tagsText}
-                  onChange={(e) => setTagsText(e.target.value)}
-                  placeholder={t('edit.tags.hint')}
-                />
-                {tags.length > 0 && (
-                  <div className="edit__tags-preview">
-                    {tags.map((tag) => <span key={tag} className="tag">#{tag}</span>)}
-                  </div>
-                )}
-              </div>
-
-              <RecurrenceField
-                recurrence={recurrence}
-                cronExpr={cronExpr}
-                onRecurrenceChange={setRecurrence}
-                onCronChange={setCronExpr}
+              <textarea
+                className="edit__notes-clean"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                rows={3}
+                placeholder={t('edit.notes.placeholder')}
               />
 
               <div className="hig-group">
+                <Collapsible
+                  label={t('edit.tags')}
+                  value={tagsSummary}
+                  open={showTags}
+                  onToggle={() => setShowTags((v) => !v)}
+                >
+                  <div className="edit__inline">
+                    <input
+                      className="edit__input"
+                      value={tagsText}
+                      onChange={(e) => setTagsText(e.target.value)}
+                      placeholder={t('edit.tags.hint')}
+                      autoFocus
+                    />
+                    {tags.length > 0 && (
+                      <div className="edit__tags-preview">
+                        {tags.map((tag) => <span key={tag} className="tag">#{tag}</span>)}
+                      </div>
+                    )}
+                  </div>
+                </Collapsible>
+                <Collapsible
+                  label={t('edit.repeat')}
+                  value={recurrenceShort(recurrence, t)}
+                  open={showRepeat}
+                  onToggle={() => setShowRepeat((v) => !v)}
+                >
+                  <div className="edit__inline">
+                    <RecurrenceField
+                      recurrence={recurrence}
+                      cronExpr={cronExpr}
+                      onRecurrenceChange={setRecurrence}
+                      onCronChange={setCronExpr}
+                    />
+                  </div>
+                </Collapsible>
                 <Collapsible
                   label={t('edit.deadline')}
                   value={formatAbsolute(deadline)}
@@ -169,13 +204,15 @@ export function EditModal({ todo, onClose }: Props) {
                 </Collapsible>
               </div>
 
-              <MarkdownEditor
-                label={t('edit.notes')}
-                value={notes}
-                onChange={setNotes}
-                placeholder={t('edit.notes.placeholder')}
-                emptyLabel={t('edit.notes.empty')}
-              />
+              {notes.trim() && (
+                <MarkdownEditor
+                  label={t('edit.notes.preview')}
+                  value={notes}
+                  onChange={setNotes}
+                  placeholder={t('edit.notes.placeholder')}
+                  emptyLabel={t('edit.notes.empty')}
+                />
+              )}
             </>
           ) : (
             <RemindersField value={reminders} onChange={setReminders} />

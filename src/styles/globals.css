@@ -30,20 +30,19 @@ body {
 }
 button { font: inherit; color: inherit; background: none; border: none; cursor: pointer; padding: 0; }
 input, textarea, select { font: inherit; color: inherit; }
+[data-theme="paper"] body { font-feature-settings: 'liga', 'kern'; }
+[data-theme="cyberpunk"] body { font-feature-settings: 'tnum'; }
 
 /* Mobile tap hygiene — kill grey highlight, use the OS tap behavior
    (no 300ms wait), no double-tap zoom. */
 button, a, [role="button"], [role="tab"], [role="radio"], [role="switch"],
 .row, .toc-item, .hig-row, .hig-icon-btn, .theme-tile, .sound-chip,
-.tabbar__btn, .row__action, .focus__top-btn, .picker__nav-btn, .calendar__day,
-.chip, .compose-time-btn, .compose-submit, .tag__x, .help__back, .help__toc-btn,
-.help__nav-btn, .help__dot {
+.tabbar__btn, .row__action, .focus__top-btn, .calendar__day, .cal__day,
+.chip, .tag__x, .help__back, .help__toc-btn,
+.help__nav-btn, .help__dot, .new-task-btn {
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
 }
-
-[data-theme="paper"] body { font-feature-settings: 'liga', 'kern'; }
-[data-theme="cyberpunk"] body { font-feature-settings: 'tnum'; }
 
 kbd {
   display: inline-block;
@@ -80,18 +79,15 @@ kbd {
   .tabbar__btn:active .tabbar__btn-inner,
   .row__action:active,
   .focus__top-btn:active,
-  .picker__nav-btn:active,
   .hig-icon-btn:not(:disabled):active,
   .theme-tile:active,
+  .new-task-btn:active,
   .tag--filter:active {
     background: var(--bg-2);
   }
-  .compose-submit:active { transform: scale(0.92); }
-  .chip:active,
-  .compose-time-btn:active { background: var(--bg-2); }
-
-  /* The hover-bridge is desktop-only — on touch it would steal taps. */
-  .compose-bridge { pointer-events: none !important; }
+  .chip:active { background: var(--bg-2); }
+  .cal__day:active:not(.cal__day--selected) { background: var(--bg-2); }
+  .new-task-btn:active { transform: scale(0.98); }
 }
 
 /* =====================================================
@@ -393,128 +389,6 @@ kbd {
   letter-spacing: 0;
 }
 .chip[aria-pressed="true"] .chip__time { color: inherit; opacity: .7; }
-
-/* Custom date+time popover */
-.picker {
-  margin: 8px 32px 0;
-  max-width: 380px;
-  border: 1px solid var(--hairline-strong);
-  border-radius: var(--radius-soft);
-  padding: 16px;
-  background: var(--bg-2);
-  display: flex; flex-direction: column; gap: 14px;
-}
-.picker__head {
-  display: flex; align-items: center; justify-content: space-between;
-  gap: 8px;
-}
-.picker__title {
-  font-family: var(--font-display);
-  font-weight: 600;
-  font-size: 14px;
-  letter-spacing: -0.01em;
-}
-.picker__nav {
-  display: inline-flex; align-items: center; gap: 2px;
-}
-.picker__nav-btn {
-  width: 28px; height: 28px;
-  border-radius: var(--radius-soft);
-  color: var(--fg-2);
-  display: inline-flex; align-items: center; justify-content: center;
-  transition: background var(--dur-fast), color var(--dur-fast);
-}
-.picker__nav-btn:hover { background: var(--bg); color: var(--fg); }
-
-.calendar {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 2px;
-}
-.calendar__wd {
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.16em;
-  color: var(--fg-muted);
-  text-align: center;
-  padding: 4px 0 8px;
-  text-transform: uppercase;
-}
-.calendar__day {
-  height: 38px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 13px;
-  font-variant-numeric: tabular-nums;
-  color: var(--fg);
-  border-radius: var(--radius-soft);
-  transition: background var(--dur-fast), color var(--dur-fast);
-  position: relative;
-}
-.calendar__day:not(.calendar__day--selected):hover { background: var(--bg-2); }
-.calendar__day--outside { color: var(--fg-muted); }
-.calendar__day--today { font-weight: 700; }
-.calendar__day--today::after {
-  content: '';
-  position: absolute; bottom: 6px; left: 50%; transform: translateX(-50%);
-  width: 3px; height: 3px; border-radius: 50%;
-  background: var(--accent);
-}
-.calendar__day--selected,
-.calendar__day--selected:hover {
-  background: var(--accent);
-  color: var(--on-accent);
-}
-.calendar__day--selected.calendar__day--today::after { background: var(--on-accent); }
-
-.time-row {
-  display: flex; align-items: center; gap: 12px;
-  padding-top: 12px;
-  border-top: 1px solid var(--hairline);
-}
-.time-row__label {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.22em;
-  color: var(--fg-muted);
-  text-transform: uppercase;
-  flex-shrink: 0;
-}
-.time-input {
-  display: inline-flex; align-items: center; gap: 4px;
-  font-family: var(--font-mono);
-  font-size: 16px;
-  font-weight: 500;
-  color: var(--fg);
-}
-.time-input input {
-  width: 36px;
-  background: none;
-  border: none;
-  text-align: center;
-  outline: none;
-  padding: 4px 0;
-  font: inherit;
-  color: inherit;
-  font-variant-numeric: tabular-nums;
-}
-.time-input input:focus { background: var(--bg); border-radius: 4px; }
-.time-input__sep { color: var(--fg-muted); }
-.time-chips { display: flex; gap: 4px; flex-wrap: wrap; flex: 1; justify-content: flex-end; }
-.time-chip {
-  padding: 4px 10px;
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius-soft);
-  font-family: var(--font-mono);
-  font-size: 12px;
-  color: var(--fg-2);
-  transition: border-color var(--dur-fast), color var(--dur-fast), background var(--dur-fast);
-}
-.time-chip:hover { border-color: var(--hairline-strong); color: var(--fg); }
-.time-chip[aria-pressed="true"] {
-  background: var(--accent); color: var(--on-accent); border-color: var(--accent);
-}
 
 /* =====================================================
    LIST · sections + rows
@@ -1247,7 +1121,7 @@ kbd {
   z-index: 50;
   width: min(420px, calc(100vw - 16px));
   display: flex;
-  flex-direction: column;                /* Composer above, TabBar below */
+  flex-direction: column;                /* New-task button above, TabBar below */
   align-items: stretch;
   gap: 8px;
   pointer-events: none;
@@ -1329,119 +1203,6 @@ kbd {
 .tabbar__btn-icon { display: inline-flex; opacity: .80; transition: opacity var(--dur-fast); }
 .tabbar__btn[aria-selected="true"] .tabbar__btn-icon { opacity: 1; }
 .tabbar__btn-label { line-height: 1; }
-
-/* Composer (floating) — input row is FIXED height; expanded options
-   appear as a separate floating popover ABOVE so the dock never resizes
-   and the tabbar / page below never shifts. */
-.dock__composer {
-  position: relative;
-  width: 100%;
-  background: var(--bg-popover);
-  border: 1px solid var(--hairline-strong);
-  border-radius: 28px;
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.10), 0 1px 0 var(--hairline);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  transition: border-color var(--dur-fast), box-shadow var(--dur-fast);
-}
-[data-theme="cyberpunk"] .dock__composer { border-radius: 8px; }
-[data-theme="cyberpunk"] .dock__composer { border-radius: 6px; }
-.dock__composer--open {
-  border-color: color-mix(in srgb, var(--accent) 45%, var(--hairline-strong));
-}
-[data-theme="cyberpunk"] .dock__composer--open { box-shadow: 0 0 28px rgba(0, 240, 255, 0.30); }
-
-/* Detached popover that sits ABOVE the composer pill */
-.compose-popover {
-  position: absolute;
-  bottom: calc(100% + 8px);
-  left: 0;
-  right: 0;
-  background: var(--bg-popover);
-  border: 1px solid var(--hairline-strong);
-  border-radius: 28px;
-  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.12), 0 1px 0 var(--hairline);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  overflow: hidden;
-  opacity: 0;
-  visibility: hidden;
-  transform: translateY(8px) scale(0.96);
-  transform-origin: 50% 100%;
-  transition:
-    opacity 240ms cubic-bezier(.2, .8, .2, 1),
-    transform 240ms cubic-bezier(.2, .8, .2, 1),
-    visibility 0s linear 240ms;
-  pointer-events: none;
-  z-index: 51;
-}
-[data-theme="cyberpunk"] .compose-popover { border-radius: 8px; }
-.compose-popover[data-open="true"] {
-  opacity: 1;
-  visibility: visible;
-  transform: none;
-  transition:
-    opacity 260ms cubic-bezier(.2, .8, .2, 1),
-    transform 260ms cubic-bezier(.2, .8, .2, 1),
-    visibility 0s linear 0s;
-  pointer-events: auto;
-}
-
-/* Compact single row — anchored at the BOTTOM, fixed height */
-.compose-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 7px 7px 7px 12px;
-  cursor: text;
-  min-width: 0;
-  border-radius: 28px;
-  overflow: hidden;
-}
-[data-theme="cyberpunk"] .compose-row { border-radius: 8px; }
-
-/* Invisible bridge — covers the gap between input pill and popover so the
-   mouse never leaves dock__composer when traversing upward. */
-.compose-bridge {
-  position: absolute;
-  bottom: 100%;
-  left: 0;
-  right: 0;
-  height: 14px;
-  pointer-events: none;
-}
-.dock__composer--open .compose-bridge { pointer-events: auto; }
-.compose-row__plus {
-  width: 18px; height: 18px;
-  display: inline-flex; align-items: center; justify-content: center;
-  color: var(--fg-muted);
-  flex-shrink: 0;
-}
-
-/* Pills wrap — tags inline + input */
-.compose-pills {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 4px 5px;
-  min-width: 0;
-  cursor: text;
-}
-.compose-row__input {
-  flex: 1 1 0;
-  min-width: 28px;
-  width: 0;
-  background: none;
-  border: none;
-  outline: none;
-  font-family: var(--font-body);
-  font-size: 14px;        /* tight on desktop; touchscreens override above */
-  color: var(--fg);
-  padding: 4px 0;
-}
-.compose-row__input::placeholder { color: var(--fg-muted); }
-
 /* Inline tag chip inside input */
 .tag--in-input {
   background: color-mix(in srgb, var(--accent) 12%, transparent);
@@ -1472,41 +1233,9 @@ kbd {
   display: inline-flex; align-items: center; justify-content: center;
   transition: color var(--dur-fast), background var(--dur-fast);
 }
-.tag__x:hover { color: var(--fg); background: var(--bg-2); }
+.tag__x:hover { color: var(--fg); background: var(--bg-2); }@media (max-width: 540px) {}
 
-/* Expanded section (chips + calendar) — opacity fade synced with row size */
-.compose-expand {
-  padding: 12px 14px 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-.compose-section { display: flex; flex-direction: column; gap: 7px; }
-.compose-section__head {
-  font-family: var(--font-sans);
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.24em;
-  text-transform: uppercase;
-  color: var(--fg-muted);
-  padding: 0 2px;
-}
-[data-theme="paper"] .compose-section__head {
-  font-family: var(--font-serif); font-style: italic;
-  text-transform: none; letter-spacing: 0.04em; font-size: 13px;
-}
-.compose-section__chips {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 5px;
-}
-.compose-section__chips:has(.chip--rel) { grid-template-columns: repeat(6, 1fr); }
-@media (max-width: 540px) {
-  .compose-section__chips:has(.chip--rel) { grid-template-columns: repeat(4, 1fr); }
-  .compose-section__chips { grid-template-columns: repeat(3, 1fr); }
-}
-
-/* Relative chips — single line, larger touch target */
+/* Quick-chip family (used inside ComposerSheet) */
 .chip--rel {
   display: inline-flex;
   align-items: center;
@@ -1553,7 +1282,7 @@ kbd {
 }
 .chip--abs[aria-pressed="true"] .chip__time { color: inherit; opacity: .7; }
 
-/* Custom calendar toggle chip */
+/* Custom toggle chip (opens the inline Custom picker) */
 .chip--custom {
   display: inline-flex;
   align-items: center;
@@ -1574,108 +1303,9 @@ kbd {
   border-style: solid;
   border-color: var(--accent);
 }
-
-.compose-picker { padding: 2px 0 4px; }
-.compose-picker .picker { margin: 0; padding: 0; background: transparent; border: none; max-width: none; }
-
-/* Time + Add row — now lives INSIDE the input row */
-.compose-time-row { display: none; }
-.compose-row .compose-time-btn {
-  display: inline-flex; align-items: center; justify-content: center;
-  gap: 5px;
-  padding: 6px 9px;
-  border: 1px solid var(--hairline);
-  border-radius: 12px;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--fg-2);
-  transition: border-color var(--dur-fast), color var(--dur-fast), background var(--dur-fast);
-  flex-shrink: 0;
-  /* Slightly wider on desktop to comfortably hold "Tomorrow PM 18:00".
-     The label inside truncates with ellipsis if it ever overflows. */
-  width: 124px;
-  min-width: 0;
-}
-.compose-time-btn__label {
-  flex: 1 1 0;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  text-align: center;
-}
-.compose-time-btn__chev { flex-shrink: 0; }
-[data-theme="cyberpunk"] .compose-row .compose-time-btn { border-radius: 4px; }
-.compose-row .compose-time-btn:hover { border-color: var(--hairline-strong); color: var(--fg); }
-.compose-row .compose-time-btn[aria-pressed="true"] { background: var(--bg-2); color: var(--fg); }
-
-.compose-row .compose-submit {
-  width: 32px;
-  height: 32px;
-  border-radius: 999px;
-  background: var(--accent);
-  color: var(--on-accent);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  transition: transform var(--dur-fast), opacity var(--dur-fast);
-}
-[data-theme="cyberpunk"] .compose-row .compose-submit { border-radius: 6px; }
-.compose-row .compose-submit:hover { transform: translateY(-1px); }
-.compose-row .compose-submit:active { transform: translateY(0); }
-.compose-row .compose-submit:disabled { opacity: .25; cursor: not-allowed; }
-
-/* Compact preset chips */
-.compose-chips {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 4px;
-}
-.chip--compact {
-  display: inline-flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 1px;
-  padding: 5px 8px;
-  border: 1px solid var(--hairline);
-  border-radius: 8px;
-  background: transparent;
-  color: var(--fg-2);
-  font-size: 11.5px;
-  line-height: 1.2;
-  transition: background var(--dur-fast), color var(--dur-fast), border-color var(--dur-fast);
-  min-width: 0;
-}
-[data-theme="cyberpunk"] .chip--compact { border-radius: 2px; }
-.chip--compact:hover { border-color: var(--hairline-strong); color: var(--fg); }
-.chip--compact[aria-pressed="true"] {
-  border-color: var(--accent); color: var(--fg);
-  background: color-mix(in srgb, var(--accent) 10%, transparent);
-}
-[data-theme="mono-light"] .chip--compact[aria-pressed="true"],
-[data-theme="mono-dark"]  .chip--compact[aria-pressed="true"] {
-  background: var(--accent); color: var(--on-accent); border-color: var(--accent);
-}
-.chip--compact .chip__label { font-weight: 500; }
-.chip--compact .chip__time {
-  font-family: var(--font-mono);
-  font-size: 9.5px;
-  color: var(--fg-muted);
-  letter-spacing: 0;
-}
-.chip--compact[aria-pressed="true"] .chip__time { color: inherit; opacity: .7; }
-
-.compose-expand .picker { margin: 0; max-width: none; padding: 12px; }
-
 @media (max-width: 540px) {
   /* Keep safe-area-inset; just bump min gap a bit higher for thumb reach. */
-  .dock { bottom: max(env(safe-area-inset-bottom, 0px), 10px); }
-  .compose-chips { grid-template-columns: repeat(3, 1fr); }
-  .compose-row { gap: 5px; padding: 8px 9px; }
-  .compose-row .compose-time-btn { width: 96px; font-size: 10.5px; padding: 6px 7px; }
-  .compose-row .compose-submit { padding: 6px 10px; min-width: 44px; }
-  /* Larger tap targets on the tab bar (Apple HIG = 44px minimum) */
+  .dock { bottom: max(env(safe-area-inset-bottom, 0px), 10px); }  /* Larger tap targets on the tab bar (Apple HIG = 44px minimum) */
   .tabbar__btn-inner { padding: 10px 14px 9px; gap: 4px; }
   .tabbar__btn-icon svg { width: 22px; height: 22px; }
 }
@@ -2643,8 +2273,6 @@ kbd {
   .help__dots { padding: 0; max-width: none; }
 }
 
-
-
 /* Edit modal — narrow centered sheet variant */
 .modal--sheet { width: min(420px, 100%); }
 .edit__input--narrow { max-width: 96px; }
@@ -3357,4 +2985,90 @@ kbd {
   border-radius: 4px;
   color: var(--accent);
   text-shadow: 0 0 8px color-mix(in srgb, var(--accent) 60%, transparent);
+}
+
+/* ─────────────────────────────────────────────
+   NewTaskButton — accent pill that opens the ComposerSheet
+   ───────────────────────────────────────────── */
+.new-task-btn {
+  width: 100%;
+  display: inline-flex;
+  align-items: center; justify-content: center;
+  gap: 8px;
+  padding: 12px 18px;
+  background: var(--accent);
+  color: var(--on-accent);
+  border: none;
+  border-radius: 28px;
+  font-family: var(--font-display);
+  font-size: 14.5px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.10), 0 1px 0 var(--hairline);
+  transition: transform var(--dur-fast), box-shadow var(--dur-fast), filter var(--dur-fast);
+  cursor: pointer;
+}
+[data-theme="cyberpunk"] .new-task-btn {
+  border-radius: 6px;
+  box-shadow: 0 0 24px rgba(0, 240, 255, 0.30);
+}
+[data-theme="paper"] .new-task-btn { font-style: italic; font-weight: 500; font-size: 16px; }
+.new-task-btn:hover { transform: translateY(-1px); filter: brightness(1.04); }
+.new-task-btn:active { transform: translateY(0); }
+.new-task-btn__icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--on-accent) 18%, transparent);
+}
+
+/* ─────────────────────────────────────────────
+   ComposerSheet — modal layout for the new-task form
+   ───────────────────────────────────────────── */
+.modal--compose { width: min(440px, 100%); }
+.compose-sheet__when {
+  display: flex; flex-direction: column;
+  gap: 10px;
+  padding-top: 4px;
+}
+.compose-sheet__when-head {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: 10px;
+  padding: 0 2px;
+}
+.compose-sheet__when-label {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+[data-theme="paper"] .compose-sheet__when-label {
+  text-transform: none; font-style: italic; font-weight: 500;
+  font-size: 13px; letter-spacing: 0;
+}
+.compose-sheet__when-value {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  color: var(--fg);
+  letter-spacing: -0.01em;
+}
+.compose-sheet__chips {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 6px;
+}
+.compose-sheet__chips + .compose-sheet__chips {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+@media (max-width: 540px) {
+  .compose-sheet__chips { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .compose-sheet__chips + .compose-sheet__chips { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+.compose-sheet__custom {
+  display: flex; flex-direction: column;
+  gap: 10px;
+  padding: 4px 0 0;
 }

@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { HomeTab } from './components/HomeTab'
 import { AllTab } from './components/AllTab'
 import { SettingsTab } from './components/SettingsTab'
-import { Composer } from './components/Composer'
+import { ComposerSheet } from './components/ComposerSheet'
+import { NewTaskButton } from './components/NewTaskButton'
 import { TabBar } from './components/TabBar'
 import { FocusView } from './components/FocusView'
 import { HelpPage } from './components/HelpPage'
@@ -30,7 +31,7 @@ export default function App() {
   const customThemes = useCustomThemes((s) => s.themes)
   const notifierEnabled = useNotifierPrefs((s) => s.enabled)
 
-  const composerRef = useRef<HTMLInputElement | null>(null)
+  const [composeOpen, setComposeOpen] = useState(false)
   const mainRef = useRef<HTMLElement | null>(null)
   /* Track previous tab so the inner pane can animate from the correct side
      (slide-in-from-right when moving forward, from-left when moving back).
@@ -81,8 +82,7 @@ export default function App() {
 
   useHotkey('n', (e) => {
     e.preventDefault()
-    composerRef.current?.focus()
-    composerRef.current?.select()
+    setComposeOpen(true)
   })
   useHotkey('t', () => cycleTheme())
   useHotkey('Enter', () => { if (!focusId && next) setFocus(next.id) })
@@ -109,10 +109,11 @@ export default function App() {
       </main>
 
       <div className="dock">
-        {tab !== 'settings' && <Composer inputRef={composerRef} />}
+        {tab !== 'settings' && <NewTaskButton onPress={() => setComposeOpen(true)} />}
         <TabBar />
       </div>
 
+      <ComposerSheet open={composeOpen} onClose={() => setComposeOpen(false)} />
       <FocusView />
       <HelpPage />
     </div>

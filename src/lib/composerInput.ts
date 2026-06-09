@@ -3,6 +3,9 @@ import { resolveAbsolute, resolveRelative, type AbsolutePreset, type RelativePre
 export type Choice =
   | { kind: 'relative'; presetId: string }
   | { kind: 'absolute'; presetId: string }
+  /** Free-form duration the user dialed in via the relative custom picker. */
+  | { kind: 'custom-rel'; offsetMs: number }
+  /** Free-form absolute timestamp dialed in via the wheel picker. */
   | { kind: 'custom'; ts: number }
 
 export function defaultChoice(absolute: AbsolutePreset[]): Choice {
@@ -65,6 +68,9 @@ export function resolveDeadline(
     const p = absolute.find((x) => x.id === choice.presetId) ?? absolute[0]
     if (p) return resolveAbsolute(p, now)
     return now.getTime() + 24 * 60 * 60 * 1000
+  }
+  if (choice.kind === 'custom-rel') {
+    return now.getTime() + Math.max(0, choice.offsetMs)
   }
   return choice.ts
 }

@@ -20,6 +20,8 @@ interface Props {
   onClose: () => void
 }
 
+type EditTab = 'details' | 'reminders'
+
 function parseTagsText(text: string): string[] {
   return Array.from(new Set(
     text.split(/[\s,，]+/).map((tag) => tag.replace(/^#/, '').trim()).filter(Boolean),
@@ -29,6 +31,7 @@ function parseTagsText(text: string): string[] {
 export function EditModal({ todo, onClose }: Props) {
   const updateTodo = useTodos((s) => s.updateTodo)
   const t = useT()
+  const [tab, setTab] = useState<EditTab>('details')
   const [title, setTitle] = useState('')
   const [deadline, setDeadline] = useState<number>(Date.now())
   const [createdAt, setCreatedAt] = useState<number>(Date.now())
@@ -42,6 +45,7 @@ export function EditModal({ todo, onClose }: Props) {
 
   useEffect(() => {
     if (!todo) return
+    setTab('details')
     setTitle(todo.title)
     setDeadline(todo.deadline)
     setCreatedAt(todo.createdAt)
@@ -93,68 +97,91 @@ export function EditModal({ todo, onClose }: Props) {
           </button>
         </header>
 
+        <div className="em-tabs" role="tablist" aria-label={t('edit.title')}>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={tab === 'details'}
+            className={'em-tabs__tab' + (tab === 'details' ? ' em-tabs__tab--active' : '')}
+            onClick={() => setTab('details')}
+          >
+            {t('edit.tab.details')}
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={tab === 'reminders'}
+            className={'em-tabs__tab' + (tab === 'reminders' ? ' em-tabs__tab--active' : '')}
+            onClick={() => setTab('reminders')}
+          >
+            {t('edit.tab.reminders')}
+          </button>
+        </div>
+
         <div className="modal__body">
-
-          <input
-            className="edit__title"
-            value={title}
-            placeholder={t('edit.title.input')}
-            onChange={(e) => setTitle(e.target.value)}
-          />
-
-          <div className="edit__grid edit__grid--2">
-            <div className="edit__field">
-              <label className="edit__label">{t('edit.tags')}</label>
+          {tab === 'details' ? (
+            <>
               <input
-                className="edit__input"
-                value={tagsText}
-                onChange={(e) => setTagsText(e.target.value)}
-                placeholder={t('edit.tags.hint')}
+                className="edit__title"
+                value={title}
+                placeholder={t('edit.title.input')}
+                onChange={(e) => setTitle(e.target.value)}
               />
-              {tags.length > 0 && (
-                <div className="edit__tags-preview">
-                  {tags.map((tag) => <span key={tag} className="tag">#{tag}</span>)}
+
+              <div className="edit__grid edit__grid--2">
+                <div className="edit__field">
+                  <label className="edit__label">{t('edit.tags')}</label>
+                  <input
+                    className="edit__input"
+                    value={tagsText}
+                    onChange={(e) => setTagsText(e.target.value)}
+                    placeholder={t('edit.tags.hint')}
+                  />
+                  {tags.length > 0 && (
+                    <div className="edit__tags-preview">
+                      {tags.map((tag) => <span key={tag} className="tag">#{tag}</span>)}
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
 
-            <RecurrenceField
-              recurrence={recurrence}
-              cronExpr={cronExpr}
-              onRecurrenceChange={setRecurrence}
-              onCronChange={setCronExpr}
-            />
-          </div>
+                <RecurrenceField
+                  recurrence={recurrence}
+                  cronExpr={cronExpr}
+                  onRecurrenceChange={setRecurrence}
+                  onCronChange={setCronExpr}
+                />
+              </div>
 
-          <div className="hig-group">
-            <Collapsible
-              label={t('edit.deadline')}
-              value={formatAbsolute(deadline)}
-              open={showDeadlinePicker}
-              onToggle={() => setShowDeadlinePicker((v) => !v)}
-            >
-              <WheelPicker value={deadline} onChange={setDeadline} />
-            </Collapsible>
-            <Collapsible
-              label={t('edit.created')}
-              value={formatAbsolute(createdAt)}
-              open={showCreatedAt}
-              onToggle={() => setShowCreatedAt((v) => !v)}
-            >
-              <WheelPicker value={createdAt} onChange={setCreatedAt} />
-            </Collapsible>
-          </div>
+              <div className="hig-group">
+                <Collapsible
+                  label={t('edit.deadline')}
+                  value={formatAbsolute(deadline)}
+                  open={showDeadlinePicker}
+                  onToggle={() => setShowDeadlinePicker((v) => !v)}
+                >
+                  <WheelPicker value={deadline} onChange={setDeadline} />
+                </Collapsible>
+                <Collapsible
+                  label={t('edit.created')}
+                  value={formatAbsolute(createdAt)}
+                  open={showCreatedAt}
+                  onToggle={() => setShowCreatedAt((v) => !v)}
+                >
+                  <WheelPicker value={createdAt} onChange={setCreatedAt} />
+                </Collapsible>
+              </div>
 
-          <MarkdownEditor
-            label={t('edit.notes')}
-            value={notes}
-            onChange={setNotes}
-            placeholder={t('edit.notes.placeholder')}
-            emptyLabel={t('edit.notes.empty')}
-          />
-
-          <RemindersField value={reminders} onChange={setReminders} />
-
+              <MarkdownEditor
+                label={t('edit.notes')}
+                value={notes}
+                onChange={setNotes}
+                placeholder={t('edit.notes.placeholder')}
+                emptyLabel={t('edit.notes.empty')}
+              />
+            </>
+          ) : (
+            <RemindersField value={reminders} onChange={setReminders} />
+          )}
         </div>
 
         <footer className="modal__footer">

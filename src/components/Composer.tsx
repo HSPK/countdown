@@ -1,7 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTodos } from '../store/todos'
-import { useChipPresets } from '../store/chipPresets'
-import { resolveAbsolute, type AbsolutePreset, type RelativePreset } from '../lib/chipResolver'
+import {
+  defaultAbsolutePresets,
+  defaultRelativePresets,
+  resolveAbsolute,
+  type AbsolutePreset,
+  type RelativePreset,
+} from '../lib/chipResolver'
 import {
   defaultChoice,
   extractTags,
@@ -13,25 +18,50 @@ import { triggerSubmitFeedback } from '../lib/feedback'
 import { useT } from '../lib/i18n'
 import { formatHM, pad } from '../lib/time'
 import { WheelPicker } from './WheelPicker'
+import { RelativeDurationPicker } from './RelativeDurationPicker'
 import { IconPlus, IconX, IconChevronDown, IconArrowUp, IconCalendar } from './Icons'
 
 interface Props {
   inputRef?: React.MutableRefObject<HTMLInputElement | null>
 }
 
+/* Composer chip presets are now app-defined constants — the per-user
+   chip editor was retired in favor of per-todo reminders. Keeping a
+   single source of truth here avoids dragging a store dependency for
+   what is now a static config. */
+const RELATIVE_PRESETS: RelativePreset[] = defaultRelativePresets()
+const ABSOLUTE_PRESETS: AbsolutePreset[] = defaultAbsolutePresets()
+
 function chipLabel(t: ReturnType<typeof useT>, p: { labelKey?: string; label: string }): string {
   return p.labelKey ? t(p.labelKey) : p.label
 }
 
+const HOUR_MS = 3_600_000
+const DAY_MS = 24 * HOUR_MS
+
+function formatRelLabel(t: ReturnType<typeof useT>, offsetMs: number): string {
+  if (offsetMs <= 0) return '+0' + t('chips.unit.min.short')
+  const d = Math.floor(offsetMs / DAY_MS)
+  const h = Math.floor((offsetMs % DAY_MS) / HOUR_MS)
+  const m = Math.floor((offsetMs % HOUR_MS) / 60_000)
+  const parts: string[] = []
+  if (d) parts.push(`${d}${t('chips.unit.day.short')}`)
+  if (h) parts.push(`${h}${t('chips.unit.hour.short')}`)
+  if (m) parts.push(`${m}${t('chips.unit.min.short')}`)
+  if (parts.length === 0) parts.push(`0${t('chips.unit.min.short')}`)
+  return `+${parts.join(' ')}`
+}
+
+type CustomTab = 'rel' | 'abs'
+
 export function Composer({ inputRef }: Props) {
   const addTodo = useTodos((s) => s.addTodo)
-  const relativePresets = useChipPresets((s) => s.relative)
-  const absolutePresets = useChipPresets((s) => s.absolute)
   const t = useT()
   const [text, setText] = useState('')
   const [tags, setTags] = useState<string[]>([])
-  const [choice, setChoice] = useState<Choice>(() => defaultChoice(absolutePresets))
-  const [showCalendar, setShowCalendar] = useState(false)
+  const [choice, setChoice] = useState<Choice>(() => defaultChoice(ABSOLUTE_PRESETS))
+  const [customOpen, setCustomOpen] = useState(false)
+  const [customTab, setCustomTab] = useState<CustomTab>('rel')
 
   const [hovering, setHovering] = useState(false)
   const [focused, setFocused] = useState(false)
@@ -53,20 +83,9 @@ export function Composer({ inputRef }: Props) {
   }, [])
   const now = useMemo(() => new Date(), [tick])
   const resolvedAbsolute = useMemo(
-    () => absolutePresets.map((p) => ({ p, ts: resolveAbsolute(p, now) })),
-    [absolutePresets, now],
+    () => ABSOLUTE_PRESETS.map((p) => ({ p, ts: resolveAbsolute(p, now) })),
+    [now],
   )
-
-  /* If the chip backing the current choice gets deleted from Settings,
-     fall back to the new default so the time button never shows a ghost. */
-  useEffect(() => {
-    if (choice.kind === 'relative' && !relativePresets.some((p) => p.id === choice.presetId)) {
-      setChoice(defaultChoice(absolutePresets))
-    }
-    if (choice.kind === 'absolute' && !absolutePresets.some((p) => p.id === choice.presetId)) {
-      setChoice(defaultChoice(absolutePresets))
-    }
-  }, [relativePresets, absolutePresets, choice])
 
   useEffect(() => {
     if (!expanded) return
@@ -78,7 +97,7 @@ export function Composer({ inputRef }: Props) {
     }
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        if (showCalendar) { setShowCalendar(false); return }
+        if (customOpen) { setCustomOpen(false); return }
         setHovering(false); setFocused(false)
         inRef.current?.blur()
       }
@@ -91,18 +110,18 @@ export function Composer({ inputRef }: Props) {
       document.removeEventListener('touchstart', onDown)
       document.removeEventListener('keydown', onKey)
     }
-  }, [expanded, showCalendar])
+  }, [expanded, customOpen])
 
   const submit = () => {
     const { title, tags: finalTags } = flushPending(text, tags)
     const finalTitle = title || 'CountDown'
-    const deadline = resolveDeadline(choice, new Date(), relativePresets, absolutePresets)
+    const deadline = resolveDeadline(choice, new Date(), RELATIVE_PRESETS, ABSOLUTE_PRESETS)
     addTodo({ title: finalTitle, deadline, tags: finalTags })
     triggerSubmitFeedback()
     setText('')
     setTags([])
-    setChoice(defaultChoice(absolutePresets))
-    setShowCalendar(false)
+    setChoice(defaultChoice(ABSOLUTE_PRESETS))
+    setCustomOpen(false)
     inRef.current?.focus()
   }
 
@@ -123,7 +142,6 @@ export function Composer({ inputRef }: Props) {
   }
   const removeTag = (t: string) => setTags(tags.filter((x) => x !== t))
 
-  /* Hover delay — clear hide timer if mouse comes back, otherwise close after a beat. */
   const cancelHide = () => {
     if (hideTimer.current) { window.clearTimeout(hideTimer.current); hideTimer.current = null }
     setHovering(true)
@@ -138,31 +156,49 @@ export function Composer({ inputRef }: Props) {
 
   const pickRelative = (p: RelativePreset) => {
     setChoice({ kind: 'relative', presetId: p.id })
-    setShowCalendar(false)
+    setCustomOpen(false)
   }
   const pickAbsolute = (p: AbsolutePreset) => {
     setChoice({ kind: 'absolute', presetId: p.id })
-    setShowCalendar(false)
+    setCustomOpen(false)
   }
   const toggleCustom = () => {
-    if (showCalendar) {
-      setShowCalendar(false)
+    if (customOpen) {
+      setCustomOpen(false)
+      return
+    }
+    setCustomOpen(true)
+    if (choice.kind === 'custom' || choice.kind === 'custom-rel') return
+    /* Seed the picker with a sensible starting point based on the current tab. */
+    if (customTab === 'rel') {
+      setChoice({ kind: 'custom-rel', offsetMs: 30 * 60 * 1000 })
     } else {
-      setShowCalendar(true)
-      const tentative = resolveDeadline(choice, new Date(), relativePresets, absolutePresets)
+      const tentative = resolveDeadline(choice, new Date(), RELATIVE_PRESETS, ABSOLUTE_PRESETS)
+      setChoice({ kind: 'custom', ts: tentative })
+    }
+  }
+  const switchCustomTab = (next: CustomTab) => {
+    setCustomTab(next)
+    if (next === 'rel' && choice.kind !== 'custom-rel') {
+      setChoice({ kind: 'custom-rel', offsetMs: 30 * 60 * 1000 })
+    }
+    if (next === 'abs' && choice.kind !== 'custom') {
+      const tentative = resolveDeadline(choice, new Date(), RELATIVE_PRESETS, ABSOLUTE_PRESETS)
       setChoice({ kind: 'custom', ts: tentative })
     }
   }
 
-  /* Current label shown on the time button in the input row */
   const currentLabel = (() => {
     if (choice.kind === 'relative') {
-      const p = relativePresets.find((x) => x.id === choice.presetId)
+      const p = RELATIVE_PRESETS.find((x) => x.id === choice.presetId)
       return p ? `+${chipLabel(t, p)}` : t('composer.time')
     }
     if (choice.kind === 'absolute') {
       const r = resolvedAbsolute.find((x) => x.p.id === choice.presetId)
       if (r) return `${chipLabel(t, r.p)} ${formatHM(r.ts)}`
+    }
+    if (choice.kind === 'custom-rel') {
+      return formatRelLabel(t, choice.offsetMs)
     }
     if (choice.kind === 'custom') {
       const d = new Date(choice.ts)
@@ -179,44 +215,39 @@ export function Composer({ inputRef }: Props) {
       onMouseLeave={startHide}
       onClick={() => { if (!expanded) inRef.current?.focus() }}
     >
-      {/* Invisible bridge keeps mouse inside the dock zone when traversing
-          the 8 px gap between input row and floating popover. */}
       <div className="compose-bridge" aria-hidden />
 
-      {/* Detached popover ABOVE the pill */}
       <div className="compose-popover" data-open={expanded} aria-hidden={!expanded}>
         <div className="compose-expand">
 
-          {relativePresets.length > 0 && (
-            <div className="compose-section">
-              <div className="compose-section__head">{t('composer.section.relative')}</div>
-              <div className="compose-section__chips" role="radiogroup" aria-label={t('composer.section.relative')}>
-                {relativePresets.map((p) => {
-                  const active = choice.kind === 'relative' && choice.presetId === p.id && !showCalendar
-                  return (
-                    <button
-                      key={p.id}
-                      className="chip chip--rel"
-                      aria-pressed={active}
-                      role="radio"
-                      aria-checked={active}
-                      onClick={() => pickRelative(p)}
-                      title={t('preset.rel.title', { label: chipLabel(t, p) })}
-                      tabIndex={expanded ? 0 : -1}
-                    >
-                      {chipLabel(t, p)}
-                    </button>
-                  )
-                })}
-              </div>
+          <div className="compose-section">
+            <div className="compose-section__head">{t('composer.section.relative')}</div>
+            <div className="compose-section__chips" role="radiogroup" aria-label={t('composer.section.relative')}>
+              {RELATIVE_PRESETS.map((p) => {
+                const active = choice.kind === 'relative' && choice.presetId === p.id && !customOpen
+                return (
+                  <button
+                    key={p.id}
+                    className="chip chip--rel"
+                    aria-pressed={active}
+                    role="radio"
+                    aria-checked={active}
+                    onClick={() => pickRelative(p)}
+                    title={t('preset.rel.title', { label: chipLabel(t, p) })}
+                    tabIndex={expanded ? 0 : -1}
+                  >
+                    {chipLabel(t, p)}
+                  </button>
+                )
+              })}
             </div>
-          )}
+          </div>
 
           <div className="compose-section">
             <div className="compose-section__head">{t('composer.section.absolute')}</div>
             <div className="compose-section__chips" role="radiogroup" aria-label={t('composer.section.absolute')}>
               {resolvedAbsolute.map(({ p, ts }) => {
-                const active = choice.kind === 'absolute' && choice.presetId === p.id && !showCalendar
+                const active = choice.kind === 'absolute' && choice.presetId === p.id && !customOpen
                 return (
                   <button
                     key={p.id}
@@ -234,27 +265,56 @@ export function Composer({ inputRef }: Props) {
                 )
               })}
               <button
-                className={'chip chip--custom' + (showCalendar ? ' chip--active' : '')}
-                aria-pressed={showCalendar}
+                className={'chip chip--custom' + (customOpen ? ' chip--active' : '')}
+                aria-pressed={customOpen}
                 onClick={toggleCustom}
                 tabIndex={expanded ? 0 : -1}
               >
                 <IconCalendar width={14} height={14} />
-                <span>{showCalendar ? t('composer.custom.close') : t('composer.custom')}</span>
+                <span>{customOpen ? t('composer.custom.close') : t('composer.custom')}</span>
               </button>
             </div>
           </div>
 
-          {showCalendar && (
+          {customOpen && (
             <div className="compose-picker">
-              <WheelPicker value={choice.kind === 'custom' ? choice.ts : Date.now()}
-                onChange={(ts) => setChoice({ kind: 'custom', ts })} />
+              <div className="em-tabs" role="tablist" aria-label={t('composer.custom')}>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={customTab === 'rel'}
+                  className={'em-tabs__tab' + (customTab === 'rel' ? ' em-tabs__tab--active' : '')}
+                  onClick={() => switchCustomTab('rel')}
+                >
+                  {t('composer.custom.rel')}
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={customTab === 'abs'}
+                  className={'em-tabs__tab' + (customTab === 'abs' ? ' em-tabs__tab--active' : '')}
+                  onClick={() => switchCustomTab('abs')}
+                >
+                  {t('composer.custom.abs')}
+                </button>
+              </div>
+
+              {customTab === 'rel' ? (
+                <RelativeDurationPicker
+                  offsetMs={choice.kind === 'custom-rel' ? choice.offsetMs : 30 * 60 * 1000}
+                  onChange={(offsetMs) => setChoice({ kind: 'custom-rel', offsetMs })}
+                />
+              ) : (
+                <WheelPicker
+                  value={choice.kind === 'custom' ? choice.ts : Date.now()}
+                  onChange={(ts) => setChoice({ kind: 'custom', ts })}
+                />
+              )}
             </div>
           )}
         </div>
       </div>
 
-      {/* Input row — fixed height, never resizes */}
       <div className="compose-row">
         <span className="compose-row__plus" aria-hidden><IconPlus width={14} height={14} /></span>
         <div className="compose-pills" onClick={() => inRef.current?.focus()}>

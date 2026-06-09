@@ -1,33 +1,29 @@
 import { useRef } from 'react'
 import { useTodos } from '../store/todos'
-import { useSettings, THEMES, type ThemeName } from '../store/settings'
+import { useSettings, type Lang } from '../store/settings'
 import { useCustomThemes, parseThemeJson } from '../store/customThemes'
 import { useNotifierPrefs } from '../store/notifierPrefs'
 import { SourceManager } from './SourceManager'
-import { PresetEditor } from './PresetEditor'
 import { FeedbackSettings } from './FeedbackSettings'
+import { ThemePicker } from './ThemePicker'
 import { HigGroup, HigRow, HigRowSelect, HigRowToggle, HigSection } from './HigList'
 import { downloadJson, makeExportPayload, parseTodosJson, readFileAsText } from '../lib/portable'
 import { requestNotificationPermission } from '../hooks/useNotifier'
 import { LOCAL_SOURCE_ID } from '../store/sources'
-import { useT, LANGS, type Lang } from '../lib/i18n'
+import { useT, LANGS } from '../lib/i18n'
 import {
-  IconCheck, IconTrash, IconBell, IconDownload, IconUpload,
+  IconBell, IconDownload, IconUpload,
   IconHelp, IconExternal,
 } from './Icons'
 
-const APP_VERSION = '0.29'
+const APP_VERSION = '0.30'
 
 export function SettingsTab() {
-  const theme = useSettings((s) => s.theme)
-  const setTheme = useSettings((s) => s.setTheme)
   const lang = useSettings((s) => s.lang)
   const setLang = useSettings((s) => s.setLang)
   const setHelp = useSettings((s) => s.setHelp)
   const todos = useTodos((s) => s.todos)
   const importTodos = useTodos((s) => s.importTodos)
-  const customThemes = useCustomThemes((s) => s.themes)
-  const removeTheme = useCustomThemes((s) => s.removeTheme)
   const addTheme = useCustomThemes((s) => s.addTheme)
   const notifierEnabled = useNotifierPrefs((s) => s.enabled)
   const setNotifierEnabled = useNotifierPrefs((s) => s.setEnabled)
@@ -88,36 +84,7 @@ export function SettingsTab() {
 
       {/* Theme */}
       <HigSection title={t('settings.theme')} footer={t('settings.theme.footer')}>
-        <div className="theme-picker__grid">
-          {THEMES.map((tm) => (
-            <ThemeChooserCard
-              key={tm.id}
-              id={tm.id}
-              name={tm.name}
-              hint={tm.hint}
-              active={tm.id === theme}
-              onSelect={() => setTheme(tm.id as ThemeName)}
-            />
-          ))}
-          {customThemes.map((tm) => (
-            <ThemeChooserCard
-              key={tm.id}
-              id={tm.id}
-              name={tm.name}
-              hint={tm.hint ?? 'custom'}
-              active={tm.id === theme}
-              custom
-              onSelect={() => setTheme(tm.id as ThemeName)}
-              onDelete={() => {
-                if (confirm(t('settings.theme.remove.confirm', { name: tm.name }))) {
-                  if (theme === tm.id) setTheme('mono-light')
-                  removeTheme(tm.id)
-                }
-              }}
-              deleteLabel={t('settings.theme.remove', { name: tm.name })}
-            />
-          ))}
-        </div>
+        <ThemePicker />
 
         <input
           ref={themeFileRef}
@@ -156,11 +123,6 @@ export function SettingsTab() {
       {/* Sources */}
       <HigSection title={t('settings.sources')}>
         <SourceManager />
-      </HigSection>
-
-      {/* Quick chips (composer presets) */}
-      <HigSection title={t('settings.chips')}>
-        <PresetEditor />
       </HigSection>
 
       {/* Feedback (sound / vibration) */}
@@ -224,39 +186,6 @@ export function SettingsTab() {
         </HigGroup>
       </HigSection>
 
-    </div>
-  )
-}
-
-function ThemeChooserCard({
-  id, name, hint, active, custom, onSelect, onDelete, deleteLabel,
-}: {
-  id: string; name: string; hint?: string; active: boolean;
-  custom?: boolean; onSelect: () => void; onDelete?: () => void; deleteLabel?: string
-}) {
-  return (
-    <div className="theme-card-wrap">
-      <button
-        className={`theme-card theme-card--${custom ? 'mono-light' : id}`}
-        aria-pressed={active}
-        onClick={onSelect}
-      >
-        <span className="theme-card__check"><IconCheck width={12} height={12} /></span>
-        <span className="theme-card__preview">Aa</span>
-        <span className="theme-card__name">{name}</span>
-        <span className="theme-card__hint">{hint ?? ''}</span>
-      </button>
-      {custom && onDelete && (
-        <button
-          type="button"
-          className="theme-card__delete"
-          onClick={onDelete}
-          aria-label={deleteLabel ?? ''}
-          title={deleteLabel ?? ''}
-        >
-          <IconTrash width={11} height={11} />
-        </button>
-      )}
     </div>
   )
 }

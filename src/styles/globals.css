@@ -431,14 +431,14 @@ kbd {
   display: grid;
   grid-template-columns: 22px 1fr auto auto;
   align-items: center;
-  gap: 12px;
-  padding: 12px 12px;
-  margin: 0 -12px;
-  border-radius: 12px;
+  gap: 14px;
+  padding: 14px 14px;
+  margin: 0 -14px;
+  border-radius: 14px;
   cursor: pointer;
   transition: background var(--dur-fast);
   position: relative;
-  min-height: 56px;
+  min-height: 64px;
 }
 [data-theme="cyberpunk"] .row { border-radius: 4px; }
 .row + .row::before {
@@ -537,12 +537,12 @@ kbd {
 
 /* Big trailing countdown text */
 .row__count {
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-variant-numeric: tabular-nums;
   font-size: 13.5px;
   font-weight: 600;
-  color: var(--fg);
-  letter-spacing: -0.01em;
+  color: var(--fg-2);
+  letter-spacing: -0.005em;
   white-space: nowrap;
   text-align: right;
 }
@@ -1101,19 +1101,17 @@ kbd {
 .tabbar {
   display: flex;
   align-items: stretch;
-  padding: 4px;
+  padding: 5px;
   background: var(--bg-popover);
-  border: 1px solid var(--hairline-strong);
-  border-radius: 28px;
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.10), 0 1px 0 var(--hairline);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  gap: 6px;                  /* extra room between cells so the active pill
-                                breathes without touching neighbors */
+  border: 1px solid var(--hairline);
+  border-radius: 24px;
+  box-shadow: var(--elev-2);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  gap: 4px;
 }
 [data-theme="cyberpunk"] .tabbar {
   border-radius: 8px;
-  box-shadow: 0 0 24px rgba(0, 240, 255, 0.25);
 }
 .tabbar__btn {
   flex: 1;
@@ -1207,19 +1205,19 @@ kbd {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 9px 8px;
+  padding: 11px 10px;
   border: none;
-  border-radius: 10px;
+  border-radius: 12px;
   background: var(--bg-2);
   color: var(--fg);
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-variant-numeric: tabular-nums;
-  font-size: 13px;
+  font-size: 13.5px;
   font-weight: 500;
   letter-spacing: -0.005em;
   transition: background var(--dur-fast), color var(--dur-fast), transform var(--dur-fast);
 }
-[data-theme="cyberpunk"] .chip--rel { border-radius: 3px; }
+[data-theme="cyberpunk"] .chip--rel { border-radius: 4px; }
 .chip--rel:hover { background: var(--bg); }
 .chip--rel.chip--active,
 .chip--rel[aria-pressed="true"] {
@@ -1231,28 +1229,28 @@ kbd {
   display: inline-flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 2px;
-  padding: 8px 11px;
+  gap: 3px;
+  padding: 10px 13px;
   border: none;
-  border-radius: 10px;
+  border-radius: 12px;
   background: var(--bg-2);
   color: var(--fg);
   line-height: 1.2;
   transition: background var(--dur-fast), color var(--dur-fast), transform var(--dur-fast);
 }
-[data-theme="cyberpunk"] .chip--abs { border-radius: 3px; }
+[data-theme="cyberpunk"] .chip--abs { border-radius: 4px; }
 .chip--abs:hover { background: var(--bg); }
 .chip--abs.chip--active,
 .chip--abs[aria-pressed="true"] {
   background: var(--accent); color: var(--on-accent);
 }
-.chip--abs .chip__label { font-size: 12.5px; font-weight: 500; }
+.chip--abs .chip__label { font-size: 13px; font-weight: 500; letter-spacing: -0.005em; }
 .chip--abs .chip__time {
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-variant-numeric: tabular-nums;
-  font-size: 10.5px;
+  font-size: 11px;
   color: var(--fg-muted);
-  letter-spacing: -0.01em;
+  letter-spacing: -0.005em;
 }
 .chip--abs.chip--active .chip__time,
 .chip--abs[aria-pressed="true"] .chip__time { color: inherit; opacity: .75; }
@@ -1262,21 +1260,21 @@ kbd {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 5px;
-  padding: 9px 10px;
+  gap: 6px;
+  padding: 11px 12px;
   border: none;
-  border-radius: 10px;
+  border-radius: 12px;
   background: var(--bg-2);
   color: var(--fg-2);
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 500;
   transition: background var(--dur-fast), color var(--dur-fast);
 }
-[data-theme="cyberpunk"] .chip--custom { border-radius: 3px; }
+[data-theme="cyberpunk"] .chip--custom { border-radius: 4px; }
 .chip--custom:hover { background: var(--bg); color: var(--fg); }
 .chip--custom.chip--active,
 .chip--custom[aria-pressed="true"] {
-  background: color-mix(in srgb, var(--accent) 15%, var(--bg-2));
+  background: color-mix(in srgb, var(--accent) 18%, var(--bg-2));
   color: var(--accent);
 }
 @media (max-width: 540px) {
@@ -1292,12 +1290,10 @@ kbd {
    ===================================================== */
 .modal-backdrop {
   position: fixed; inset: 0; z-index: 200;
-  background: color-mix(in srgb, var(--bg) 70%, transparent);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: color-mix(in srgb, var(--bg) 55%, transparent);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
   display: flex; align-items: center; justify-content: center;
-  /* Respect notch + home indicator so the modal frame never gets clipped
-     by them on mobile, especially in landscape with side notches. */
   padding-top:    max(env(safe-area-inset-top, 0px),    20px);
   padding-right:  max(env(safe-area-inset-right, 0px),  20px);
   padding-bottom: max(env(safe-area-inset-bottom, 0px), 20px);
@@ -1308,11 +1304,13 @@ kbd {
 .modal {
   width: min(440px, 100%);
   background: var(--bg-popover);
-  border: 1px solid var(--hairline-strong);
-  border-radius: var(--radius-soft);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-card);
   padding: 24px;
   display: flex; flex-direction: column; gap: 16px;
+  box-shadow: var(--elev-2);
 }
+[data-theme="cyberpunk"] .modal { border-radius: 6px; }
 .modal--wide { width: min(540px, 100%); }
 .modal__title {
   margin: 0;
@@ -2358,11 +2356,12 @@ kbd {
 .hig-group {
   display: flex; flex-direction: column;
   background: var(--bg-2);
-  border: 1px solid var(--hairline);
-  border-radius: 12px;
+  border: none;
+  border-radius: var(--radius-card);
   overflow: hidden;
+  box-shadow: var(--elev-1);
 }
-[data-theme="cyberpunk"] .hig-group { border-radius: 4px; }
+[data-theme="cyberpunk"] .hig-group { border-radius: 6px; }
 
 /* Row */
 .hig-row {
@@ -2969,33 +2968,27 @@ kbd {
    ───────────────────────────────────────────── */
 .fab {
   position: fixed;
-  /* Sit above the dock + safe-area + give breathing room from the tabbar */
   right: max(env(safe-area-inset-right, 0px), 20px);
   bottom: calc(
     max(env(safe-area-inset-bottom, 0px), clamp(14px, 2.5vh, 24px))
-    + 64px /* tabbar height */
-    + 12px /* gap */
+    + 64px
+    + 14px
   );
   z-index: 60;
-  width: 52px; height: 52px;
+  width: 56px; height: 56px;
   border-radius: 50%;
   display: inline-flex;
   align-items: center; justify-content: center;
   background: var(--accent);
   color: var(--on-accent);
   border: none;
-  box-shadow:
-    0 14px 36px rgba(0, 0, 0, 0.18),
-    0 2px 6px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--elev-fab);
   cursor: pointer;
-  transition: transform var(--dur-fast) var(--ease), box-shadow var(--dur-fast), filter var(--dur-fast);
+  transition: transform var(--dur-fast) var(--ease), filter var(--dur-fast);
 }
-[data-theme="cyberpunk"] .fab {
-  border-radius: 8px;
-  box-shadow: 0 0 28px rgba(0, 240, 255, 0.45);
-}
-.fab:hover { transform: translateY(-2px); filter: brightness(1.06); }
-.fab:active { transform: translateY(0) scale(0.96); }
+[data-theme="cyberpunk"] .fab { border-radius: 10px; }
+.fab:hover { transform: translateY(-2px); filter: brightness(1.08); }
+.fab:active { transform: translateY(0) scale(0.94); }
 .fab:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 40%, transparent); outline-offset: 3px; }
 
 /* ─────────────────────────────────────────────

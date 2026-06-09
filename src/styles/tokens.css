@@ -12,8 +12,8 @@
   --fg:           #0A0A0A;
   --fg-2:         #5C5C5C;
   --fg-muted:     #A8A8A8;
-  --hairline:     rgba(0, 0, 0, 0.08);
-  --hairline-strong: rgba(0, 0, 0, 0.22);
+  --hairline:     rgba(0, 0, 0, 0.06);
+  --hairline-strong: rgba(0, 0, 0, 0.16);
   --accent:       #0A0A0A;
   --on-accent:    #FAFAFA;
 
@@ -23,7 +23,12 @@
   --u-done:       #B8B8B8;
 
   --radius:       0px;
-  --radius-soft:  6px;
+  --radius-soft:  10px;
+  --radius-card:  16px;
+
+  --elev-1: 0 1px 2px rgba(0, 0, 0, 0.04), 0 2px 8px rgba(0, 0, 0, 0.04);
+  --elev-2: 0 4px 12px rgba(0, 0, 0, 0.06), 0 12px 32px rgba(0, 0, 0, 0.08);
+  --elev-fab: 0 12px 28px rgba(0, 0, 0, 0.14), 0 4px 8px rgba(0, 0, 0, 0.06);
 
   --font-sans:    'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-serif:   'Fraunces', Georgia, 'Times New Roman', serif;
@@ -49,8 +54,8 @@
   --fg:           #F5F5F5;
   --fg-2:         #B8B8B8;
   --fg-muted:     #6B6B6B;
-  --hairline:     rgba(255, 255, 255, 0.08);
-  --hairline-strong: rgba(255, 255, 255, 0.22);
+  --hairline:     rgba(255, 255, 255, 0.06);
+  --hairline-strong: rgba(255, 255, 255, 0.16);
   --accent:       #F5F5F5;
   --on-accent:    #0A0A0A;
 
@@ -58,6 +63,10 @@
   --u-critical:   #FF6B6B;
   --u-overdue:    #6B6B6B;
   --u-done:       #5A5A5A;
+
+  --elev-1: 0 1px 2px rgba(0, 0, 0, 0.30), 0 2px 8px rgba(0, 0, 0, 0.30);
+  --elev-2: 0 4px 12px rgba(0, 0, 0, 0.40), 0 12px 32px rgba(0, 0, 0, 0.50);
+  --elev-fab: 0 12px 28px rgba(0, 0, 0, 0.55), 0 4px 8px rgba(0, 0, 0, 0.30);
 
   color-scheme: dark;
 }
@@ -70,8 +79,8 @@
   --fg:           #2A1F12;
   --fg-2:         #5C4732;
   --fg-muted:     #9B8A6E;
-  --hairline:     rgba(80, 50, 20, 0.16);
-  --hairline-strong: rgba(80, 50, 20, 0.32);
+  --hairline:     rgba(80, 50, 20, 0.12);
+  --hairline-strong: rgba(80, 50, 20, 0.24);
   --accent:       #B33A3A;
   --on-accent:    #FBF6E8;
 
@@ -79,6 +88,10 @@
   --u-critical:   #B33A3A;
   --u-overdue:    #9B8A6E;
   --u-done:       #9B8A6E;
+
+  --elev-1: 0 1px 2px rgba(80, 50, 20, 0.06), 0 2px 8px rgba(80, 50, 20, 0.06);
+  --elev-2: 0 4px 12px rgba(80, 50, 20, 0.10), 0 12px 32px rgba(80, 50, 20, 0.14);
+  --elev-fab: 0 12px 28px rgba(80, 50, 20, 0.20), 0 4px 8px rgba(80, 50, 20, 0.10);
 
   --font-display: 'Fraunces', Georgia, serif;
   --font-body:    'Fraunces', Georgia, serif;
@@ -97,8 +110,8 @@
   --fg:           #E8E8FF;
   --fg-2:         #9A8FBA;
   --fg-muted:     #4A3F5C;
-  --hairline:     rgba(0, 240, 255, 0.16);
-  --hairline-strong: rgba(0, 240, 255, 0.45);
+  --hairline:     rgba(0, 240, 255, 0.12);
+  --hairline-strong: rgba(0, 240, 255, 0.35);
   --accent:       #00F0FF;
   --on-accent:    #07000F;
 
@@ -106,6 +119,10 @@
   --u-critical:   #FF2A6D;
   --u-overdue:    #4A3F5C;
   --u-done:       #4A3F5C;
+
+  --elev-1: 0 0 12px rgba(0, 240, 255, 0.15);
+  --elev-2: 0 0 24px rgba(0, 240, 255, 0.30);
+  --elev-fab: 0 0 28px rgba(0, 240, 255, 0.45);
 
   --font-display: 'Share Tech Mono', ui-monospace, monospace;
   --font-body:    'Space Grotesk', 'Inter', system-ui, sans-serif;
@@ -127,8 +144,8 @@
   --fg:           #F4E8C1;
   --fg-2:         #BFAE89;
   --fg-muted:     #756A56;
-  --hairline:     rgba(244, 232, 193, 0.10);
-  --hairline-strong: rgba(244, 232, 193, 0.28);
+  --hairline:     rgba(244, 232, 193, 0.08);
+  --hairline-strong: rgba(244, 232, 193, 0.22);
   --accent:       #FFAA3A;
   --on-accent:    #1C1715;
 
@@ -136,6 +153,10 @@
   --u-critical:   #F26A4F;
   --u-overdue:    #756A56;
   --u-done:       #6A6052;
+
+  --elev-1: 0 1px 2px rgba(0, 0, 0, 0.30), 0 2px 8px rgba(0, 0, 0, 0.40);
+  --elev-2: 0 4px 12px rgba(0, 0, 0, 0.50), 0 12px 32px rgba(0, 0, 0, 0.60);
+  --elev-fab: 0 12px 28px rgba(0, 0, 0, 0.65), 0 4px 8px rgba(255, 170, 58, 0.20);
 
   --font-display: 'Space Grotesk', 'Inter', system-ui, sans-serif;
   --font-body:    'Inter', system-ui, sans-serif;

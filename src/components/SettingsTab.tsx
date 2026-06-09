@@ -16,7 +16,7 @@ import {
   IconHelp, IconExternal,
 } from './Icons'
 
-const APP_VERSION = '0.34'
+const APP_VERSION = '0.35'
 
 export function SettingsTab() {
   const lang = useSettings((s) => s.lang)

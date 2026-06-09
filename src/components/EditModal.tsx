@@ -145,7 +145,7 @@ export function EditModal({ todo, onClose }: Props) {
                 className="edit__notes-clean"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                rows={3}
+                rows={notes ? 4 : 2}
                 placeholder={t('edit.notes.placeholder')}
               />
 

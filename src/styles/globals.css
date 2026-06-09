@@ -302,40 +302,25 @@ kbd {
 }
 
 /* =====================================================
-   COMPOSER (new task)
+   COMPOSER (new task) — base .chip kept tiny because each
+   variant (--rel / --abs / --custom) defines its own look.
    ===================================================== */
 .chip {
   display: inline-flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
-  padding: 8px 12px;
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius-soft);
+  align-items: center;
+  border: none;
   background: transparent;
-  color: var(--fg-2);
-  transition: border-color var(--dur-fast), color var(--dur-fast), background var(--dur-fast);
-  font-size: 13px;
+  font-family: var(--font-body);
   line-height: 1.2;
-}
-.chip:hover { border-color: var(--hairline-strong); color: var(--fg); }
-.chip[aria-pressed="true"] {
-  border-color: var(--accent);
-  color: var(--accent);
-  background: transparent;
-}
-[data-theme="mono-light"] .chip[aria-pressed="true"],
-[data-theme="mono-dark"]  .chip[aria-pressed="true"] {
-  background: var(--accent); color: var(--on-accent); border-color: var(--accent);
 }
 .chip__label { font-weight: 500; }
 .chip__time {
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
+  font-variant-numeric: tabular-nums;
   font-size: 11px;
   color: var(--fg-muted);
-  letter-spacing: 0;
+  letter-spacing: -0.005em;
 }
-.chip[aria-pressed="true"] .chip__time { color: inherit; opacity: .7; }
 
 /* =====================================================
    LIST · sections + rows
@@ -1076,26 +1061,22 @@ kbd {
    BOTTOM DOCK · same width pills (composer + tabbar)
    ===================================================== */
 
-/* Outer wrap — width matches both children */
+/* Outer wrap — TabBar + FAB sit together at the bottom, centered */
 .dock {
   position: fixed;
   left: 50%;
-  /* Sits above iOS home indicator + browser bottom bar. The dvh in `.app`
-     handles the bar collapse, but Safari still occasionally paints the bar
-     over fixed elements; the safe-area-inset keeps a guaranteed gap. */
   bottom: max(env(safe-area-inset-bottom, 0px), clamp(14px, 2.5vh, 24px));
   transform: translateX(-50%);
   z-index: 50;
-  width: min(420px, calc(100vw - 16px));
   display: flex;
-  flex-direction: column;                /* New-task button above, TabBar below */
-  align-items: stretch;
-  gap: 8px;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
   pointer-events: none;
   user-select: none;
   -webkit-user-select: none;
 }
-.dock > * { pointer-events: auto; }
+.dock > * { pointer-events: auto; flex-shrink: 0; }
 
 /* Tab bar */
 .tabbar {
@@ -2789,34 +2770,34 @@ kbd {
 
 .dt-picker {
   display: flex; flex-direction: column;
-  gap: 14px;
-  padding: 14px 16px 18px;
+  gap: 12px;
+  padding: 14px 14px 16px;
 }
 
 /* Calendar */
 .cal {
   display: flex; flex-direction: column;
-  gap: 10px;
+  gap: 6px;
   user-select: none;
 }
 .cal__head {
   display: grid;
   grid-template-columns: auto 1fr auto auto;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
 }
 .cal__head-title {
   font-family: var(--font-display);
-  font-size: 14px;
+  font-size: 13.5px;
   font-weight: 600;
   color: var(--fg);
   letter-spacing: -0.005em;
-  padding: 0 6px;
+  padding: 0 4px;
   text-align: center;
 }
-[data-theme="paper"] .cal__head-title { font-style: italic; font-weight: 500; font-size: 16px; }
+[data-theme="paper"] .cal__head-title { font-style: italic; font-weight: 500; font-size: 15px; }
 .cal__nav {
-  width: 32px; height: 32px;
+  width: 28px; height: 28px;
   display: inline-flex; align-items: center; justify-content: center;
   border-radius: 8px;
   background: transparent;
@@ -2826,10 +2807,10 @@ kbd {
 [data-theme="cyberpunk"] .cal__nav { border-radius: 3px; }
 .cal__nav:hover { background: var(--bg); color: var(--fg); }
 .cal__today {
-  margin-left: 6px;
-  padding: 5px 10px;
+  margin-left: 4px;
+  padding: 4px 9px;
   border-radius: 8px;
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 600;
   color: var(--accent);
   background: transparent;
@@ -2845,41 +2826,40 @@ kbd {
 .cal__wd {
   text-align: center;
   font-family: var(--font-display);
-  font-size: 10.5px;
+  font-size: 10px;
   font-weight: 600;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--fg-muted);
-  padding: 4px 0 6px;
+  padding: 2px 0 4px;
 }
 [data-theme="paper"] .cal__wd {
   text-transform: none; font-style: italic; font-weight: 500;
-  letter-spacing: 0; font-size: 12px;
+  letter-spacing: 0; font-size: 11px;
 }
 
 .cal__grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 2px;
+  gap: 1px;
 }
 .cal__day {
   display: inline-flex; align-items: center; justify-content: center;
-  aspect-ratio: 1 / 1;
+  height: 32px;
   border-radius: 999px;
   background: transparent;
-  font-family: var(--font-display);
+  font-family: var(--font-body);
   font-variant-numeric: tabular-nums;
-  font-size: 13.5px;
+  font-size: 12.5px;
   font-weight: 500;
   color: var(--fg);
   cursor: pointer;
   transition: background var(--dur-fast), color var(--dur-fast), transform var(--dur-fast);
-  min-height: 36px;
 }
 [data-theme="cyberpunk"] .cal__day { border-radius: 3px; }
 .cal__day:hover:not(.cal__day--selected) { background: var(--bg); }
-.cal__day:active:not(.cal__day--selected) { transform: scale(0.95); }
-.cal__day--out { color: var(--fg-muted); opacity: 0.45; }
+.cal__day:active:not(.cal__day--selected) { transform: scale(0.94); }
+.cal__day--out { color: var(--fg-muted); opacity: 0.4; }
 .cal__day--today:not(.cal__day--selected) {
   outline: 1.5px solid var(--accent);
   outline-offset: -2px;
@@ -2893,15 +2873,15 @@ kbd {
 
 .cal__lunar {
   text-align: center;
-  font-family: var(--font-sans);
-  font-size: 11.5px;
+  font-family: var(--font-body);
+  font-size: 10.5px;
   color: var(--fg-muted);
-  letter-spacing: 0.04em;
-  min-height: 14px;
+  letter-spacing: 0.02em;
+  min-height: 12px;
   padding-top: 2px;
 }
 [data-theme="paper"] .cal__lunar {
-  font-family: var(--font-serif); font-style: italic; font-size: 13.5px;
+  font-family: var(--font-serif); font-style: italic; font-size: 12px;
   letter-spacing: 0;
 }
 
@@ -2909,13 +2889,13 @@ kbd {
 .time-picker {
   display: inline-flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   align-self: center;
-  padding: 4px 0 0;
+  padding: 2px 0 0;
 }
 .time-picker__sep {
-  font-family: var(--font-mono);
-  font-size: 28px;
+  font-family: var(--font-body);
+  font-size: 20px;
   font-weight: 600;
   color: var(--fg-muted);
   line-height: 1;
@@ -2924,7 +2904,7 @@ kbd {
 .stepper {
   display: flex; flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: 1px;
   outline: none;
 }
 .stepper:focus-visible .stepper__value {
@@ -2932,9 +2912,9 @@ kbd {
   outline-offset: 2px;
 }
 .stepper__btn {
-  width: 44px; height: 28px;
+  width: 36px; height: 22px;
   display: inline-flex; align-items: center; justify-content: center;
-  border-radius: 8px;
+  border-radius: 6px;
   background: transparent;
   color: var(--fg-muted);
   transition: background var(--dur-fast), color var(--dur-fast);
@@ -2944,18 +2924,18 @@ kbd {
 .stepper__btn:active { background: var(--bg-2); }
 .stepper__chev--up { transform: rotate(180deg); }
 .stepper__value {
-  width: 56px;
+  width: 50px;
   text-align: center;
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-variant-numeric: tabular-nums;
-  font-size: 30px;
+  font-size: 22px;
   font-weight: 600;
   letter-spacing: -0.02em;
   color: var(--fg);
   border-radius: 10px;
-  padding: 6px 8px;
+  padding: 4px 6px;
   background: var(--bg-2);
-  line-height: 1.05;
+  line-height: 1.1;
 }
 [data-theme="cyberpunk"] .stepper__value {
   border-radius: 4px;
@@ -2967,15 +2947,7 @@ kbd {
    Floating action button (FAB) — opens ComposerSheet
    ───────────────────────────────────────────── */
 .fab {
-  position: fixed;
-  right: max(env(safe-area-inset-right, 0px), 20px);
-  bottom: calc(
-    max(env(safe-area-inset-bottom, 0px), clamp(14px, 2.5vh, 24px))
-    + 64px
-    + 14px
-  );
-  z-index: 60;
-  width: 56px; height: 56px;
+  width: 52px; height: 52px;
   border-radius: 50%;
   display: inline-flex;
   align-items: center; justify-content: center;
@@ -2985,8 +2957,9 @@ kbd {
   box-shadow: var(--elev-fab);
   cursor: pointer;
   transition: transform var(--dur-fast) var(--ease), filter var(--dur-fast);
+  flex-shrink: 0;
 }
-[data-theme="cyberpunk"] .fab { border-radius: 10px; }
+[data-theme="cyberpunk"] .fab { border-radius: 12px; }
 .fab:hover { transform: translateY(-2px); filter: brightness(1.08); }
 .fab:active { transform: translateY(0) scale(0.94); }
 .fab:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 40%, transparent); outline-offset: 3px; }
@@ -3070,20 +3043,25 @@ kbd {
   width: 100%;
   resize: vertical;
   background: var(--bg-2);
-  border: 1px solid var(--hairline);
+  border: none;
   border-radius: 12px;
-  padding: 12px 14px;
+  padding: 10px 12px;
   font-family: var(--font-body);
-  font-size: 13.5px;
+  font-size: 13px;
   color: var(--fg);
   line-height: 1.5;
   outline: none;
-  transition: border-color var(--dur-fast), background var(--dur-fast);
-  min-height: 72px;
+  transition: background var(--dur-fast);
+  min-height: 56px;
 }
 [data-theme="cyberpunk"] .edit__notes-clean { border-radius: 4px; }
-.edit__notes-clean::placeholder { color: var(--fg-muted); }
-.edit__notes-clean:focus { border-color: var(--accent); }
+.edit__notes-clean::placeholder {
+  color: var(--fg-muted);
+  font-size: 13px;
+  font-family: var(--font-body);
+  opacity: 0.7;
+}
+.edit__notes-clean:focus { background: color-mix(in srgb, var(--accent) 4%, var(--bg-2)); }
 
 /* Inline expand body for Collapsible-wrapped text fields (Tags / Repeat) */
 .edit__inline {

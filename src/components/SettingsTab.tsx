@@ -16,7 +16,7 @@ import {
   IconHelp, IconExternal,
 } from './Icons'
 
-const APP_VERSION = '0.35'
+const APP_VERSION = '0.36'
 
 export function SettingsTab() {
   const lang = useSettings((s) => s.lang)
@@ -83,7 +83,7 @@ export function SettingsTab() {
     <div className="settings">
 
       {/* Theme */}
-      <HigSection title={t('settings.theme')} footer={t('settings.theme.footer')}>
+      <HigSection title={t('settings.theme')}>
         <ThemePicker />
 
         <input

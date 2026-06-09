@@ -2550,11 +2550,14 @@ kbd {
    ───────────────────────────────────────────── */
 .theme-picker {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
 }
-@media (max-width: 540px) {
-  .theme-picker { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 720px) {
+  .theme-picker { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 480px) {
+  .theme-picker { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 }
 
 .theme-tile-wrap { position: relative; }
@@ -2571,10 +2574,10 @@ kbd {
   text-align: left;
 }
 .theme-tile__preview {
-  border-radius: 14px;
+  border-radius: 12px;
   border: 1px solid var(--hairline);
-  padding: 14px;
-  aspect-ratio: 5 / 3;
+  padding: 10px;
+  aspect-ratio: 3 / 2;
   display: flex; flex-direction: column;
   justify-content: space-between;
   transition: transform var(--dur-fast) var(--ease), box-shadow var(--dur-fast);
@@ -2596,21 +2599,21 @@ kbd {
   display: flex; align-items: center; justify-content: space-between;
 }
 .theme-preview__title {
-  font-size: 22px;
+  font-size: 16px;
   line-height: 1;
   font-weight: 700;
   letter-spacing: -0.03em;
 }
 .theme-preview__dot {
-  width: 9px; height: 9px;
+  width: 7px; height: 7px;
   border-radius: 50%;
 }
 .theme-preview__lines {
-  display: flex; flex-direction: column; gap: 6px;
+  display: flex; flex-direction: column; gap: 4px;
 }
 .theme-preview__line {
   display: block;
-  height: 5px;
+  height: 3px;
   border-radius: 999px;
   opacity: 0.5;
 }
@@ -2619,38 +2622,42 @@ kbd {
 
 .theme-tile__caption {
   display: flex; align-items: baseline; justify-content: space-between;
-  gap: 8px;
-  padding: 8px 4px 0;
+  gap: 6px;
+  padding: 6px 2px 0;
+  min-width: 0;
 }
 .theme-tile__name {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--fg);
   letter-spacing: -0.005em;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-[data-theme="paper"] .theme-tile__name { font-style: italic; font-weight: 500; font-size: 14.5px; }
+[data-theme="paper"] .theme-tile__name { font-style: italic; font-weight: 500; font-size: 13px; }
 .theme-tile__hint {
-  font-family: var(--font-mono);
-  font-size: 10.5px;
+  font-family: var(--font-body);
+  font-size: 9.5px;
   color: var(--fg-muted);
   letter-spacing: 0;
+  text-transform: uppercase;
+  flex-shrink: 0;
 }
 
 .theme-tile__check {
   position: absolute;
-  top: 8px; right: 8px;
-  width: 22px; height: 22px;
+  top: 6px; right: 6px;
+  width: 18px; height: 18px;
   border-radius: 50%;
   display: inline-flex; align-items: center; justify-content: center;
   background: var(--accent);
   color: var(--on-accent);
-  box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.18);
 }
 
 .theme-tile__delete {
   position: absolute;
-  top: 6px; right: 6px;
-  width: 22px; height: 22px;
+  top: 4px; right: 4px;
+  width: 20px; height: 20px;
   border-radius: 6px;
   color: var(--fg-muted);
   background: var(--bg-popover);
@@ -2947,22 +2954,24 @@ kbd {
    Floating action button (FAB) — opens ComposerSheet
    ───────────────────────────────────────────── */
 .fab {
-  width: 52px; height: 52px;
-  border-radius: 50%;
   display: inline-flex;
   align-items: center; justify-content: center;
+  padding: 14px 22px;
+  border-radius: 24px;
   background: var(--accent);
   color: var(--on-accent);
-  border: none;
-  box-shadow: var(--elev-fab);
+  border: 1px solid var(--hairline);
+  box-shadow: var(--elev-2);
   cursor: pointer;
   transition: transform var(--dur-fast) var(--ease), filter var(--dur-fast);
   flex-shrink: 0;
+  align-self: stretch;
 }
-[data-theme="cyberpunk"] .fab { border-radius: 12px; }
-.fab:hover { transform: translateY(-2px); filter: brightness(1.08); }
-.fab:active { transform: translateY(0) scale(0.94); }
-.fab:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 40%, transparent); outline-offset: 3px; }
+[data-theme="cyberpunk"] .fab { border-radius: 8px; }
+.fab:hover { transform: translateY(-1px); filter: brightness(1.06); }
+.fab:active { transform: translateY(0) scale(0.96); }
+.fab:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 40%, transparent); outline-offset: 2px; }
+.fab svg { width: 18px; height: 18px; }
 
 /* ─────────────────────────────────────────────
    ComposerSheet — modal layout for the new-task form
@@ -3069,4 +3078,32 @@ kbd {
   display: flex; flex-direction: column;
   gap: 10px;
   background: var(--bg);
+}
+
+/* Reminder row trailing cluster: delete + switch side-by-side */
+.reminder-row__trailing {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.reminder-row__delete {
+  width: 28px; height: 28px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 8px;
+  background: transparent;
+  border: none;
+  color: var(--fg-muted);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity var(--dur-fast), background var(--dur-fast), color var(--dur-fast);
+}
+[data-theme="cyberpunk"] .reminder-row__delete { border-radius: 3px; }
+.hig-row:hover .reminder-row__delete,
+.hig-row:focus-within .reminder-row__delete { opacity: 1; }
+.reminder-row__delete:hover {
+  background: rgba(200, 57, 47, 0.10);
+  color: var(--u-critical);
+}
+@media (hover: none) and (pointer: coarse) {
+  .reminder-row__delete { opacity: 0.55; }
 }

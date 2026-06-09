@@ -9,7 +9,7 @@ import {
 } from '../lib/reminders'
 import { HigGroup, HigRow, HigSwitch } from './HigList'
 import { ReminderEditModal } from './ReminderEditModal'
-import { IconPlus, IconTrash } from './Icons'
+import { IconBell, IconPlus, IconTrash } from './Icons'
 
 interface Props {
   value: ReminderConfig[] | undefined
@@ -66,25 +66,26 @@ export function RemindersField({ value, onChange }: Props) {
         {reminders.map((r) => (
           <HigRow
             key={r.id}
-            icon={
-              <HigSwitch
-                checked={r.enabled}
-                onChange={(v) => toggleOne(r.id, v)}
-                label={formatReminderOffset(r.offsetMs, t)}
-              />
-            }
+            icon={<IconBell width={14} height={14} />}
             title={formatReminderOffset(r.offsetMs, t)}
             subtitle={t(`sound.${r.soundId}`)}
             trailing={
-              <button
-                type="button"
-                className="hig-icon-btn hig-icon-btn--danger"
-                aria-label={t('chips.delete')}
-                title={t('chips.delete')}
-                onClick={(e) => { e.stopPropagation(); removeOne(r.id) }}
-              >
-                <IconTrash width={14} height={14} />
-              </button>
+              <div className="reminder-row__trailing" onClick={(e) => e.stopPropagation()}>
+                <button
+                  type="button"
+                  className="reminder-row__delete"
+                  aria-label={t('chips.delete')}
+                  title={t('chips.delete')}
+                  onClick={() => removeOne(r.id)}
+                >
+                  <IconTrash width={14} height={14} />
+                </button>
+                <HigSwitch
+                  checked={r.enabled}
+                  onChange={(v) => toggleOne(r.id, v)}
+                  label={formatReminderOffset(r.offsetMs, t)}
+                />
+              </div>
             }
             onPress={() => setEditing({ value: { ...r }, isNew: false })}
           />

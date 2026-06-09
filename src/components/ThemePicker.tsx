@@ -84,7 +84,7 @@ function ThemeTile({
         </div>
         {active && (
           <span className="theme-tile__check" aria-hidden>
-            <IconCheck width={12} height={12} />
+            <IconCheck width={10} height={10} />
           </span>
         )}
       </button>

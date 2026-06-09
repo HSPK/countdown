@@ -3,14 +3,13 @@ import { useTodos } from '../store/todos'
 import { useSettings } from '../store/settings'
 import { useSources } from '../store/sources'
 import { useNow } from '../hooks/useNow'
+import { useLongPress } from '../hooks/useLongPress'
 import { useT } from '../lib/i18n'
 import { formatHM, formatRowTime, urgencyOf } from '../lib/time'
-import { RowMenu, type RowMenuItem } from './RowMenu'
 import {
   IconCheck,
   IconEdit,
   IconStarFill,
-  IconTrash,
   IconStar,
   IconRepeat,
 } from './Icons'
@@ -22,23 +21,20 @@ const RECURRENCE_LABEL_KEYS: Record<string, string> = {
 interface Props {
   todo: Todo
   onEdit: (todo: Todo) => void
-  /** Whether to show source label on this row */
   showSource?: boolean
-  /** When set, the row is a virtual recurring occurrence. The displayed
-   *  deadline overrides todo.deadline; check completes only this
-   *  occurrence (advancing the parent past it). */
   occurrenceDeadline?: number
 }
 
-/* Apple Reminders-style row: leading circular check · title + thin
-   subtitle · trailing countdown text + ⋯ overflow menu. */
+/* Apple Reminders-style row:
+   leading circular checkbox · title + subtitle · trailing countdown
+   + pin + edit (both always visible, subtle until hover/touch).
+   Delete now lives inside the EditModal Details tab. */
 export function TodoRow({ todo, onEdit, showSource, occurrenceDeadline }: Props) {
   const now = useNow()
   const t = useT()
   const toggleComplete = useTodos((s) => s.toggleComplete)
   const completeOccurrence = useTodos((s) => s.completeOccurrence)
   const togglePin = useTodos((s) => s.togglePin)
-  const removeTodo = useTodos((s) => s.removeTodo)
   const setFocus = useSettings((s) => s.setFocus)
   const source = useSources((s) => s.sources.find((x) => x.id === todo.sourceId))
   const isExternal = source?.type === 'url'
@@ -54,29 +50,8 @@ export function TodoRow({ todo, onEdit, showSource, occurrenceDeadline }: Props)
     else toggleComplete(todo.id)
   }
 
-  const menuItems: RowMenuItem[] = []
-  if (!isVirtual) {
-    menuItems.push({
-      icon: todo.pinned ? <IconStarFill width={14} height={14} /> : <IconStar width={14} height={14} />,
-      label: todo.pinned ? t('row.unpin') : t('row.pin'),
-      onSelect: () => togglePin(todo.id),
-    })
-  }
-  menuItems.push({
-    icon: <IconEdit width={14} height={14} />,
-    label: isVirtual ? t('row.edit.parent') : t('row.edit'),
-    onSelect: () => onEdit(todo),
-  })
-  if (!isVirtual) {
-    menuItems.push({
-      icon: <IconTrash width={14} height={14} />,
-      label: t('row.delete'),
-      destructive: true,
-      onSelect: () => {
-        if (confirm(t('row.delete.confirm', { title: todo.title }))) removeTodo(todo.id)
-      },
-    })
-  }
+  /* Long-press on touch opens the editor (Apple Reminders pattern). */
+  const longPress = useLongPress(() => onEdit(todo))
 
   const onRowClick = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('button')) return
@@ -89,9 +64,9 @@ export function TodoRow({ todo, onEdit, showSource, occurrenceDeadline }: Props)
     if (e.key === ' ') { e.preventDefault(); onCheck() }
   }
 
-  const urgencyClass = overdue ? ' row__time--overdue'
-    : u === 'critical' ? ' row__time--critical'
-    : u === 'soon'     ? ' row__time--soon'
+  const urgencyClass = overdue ? ' row__count--overdue'
+    : u === 'critical' ? ' row__count--critical'
+    : u === 'soon'     ? ' row__count--soon'
     : ''
 
   return (
@@ -103,6 +78,10 @@ export function TodoRow({ todo, onEdit, showSource, occurrenceDeadline }: Props)
       role="button"
       onClick={onRowClick}
       onKeyDown={onRowKey}
+      onTouchStart={longPress.onTouchStart}
+      onTouchEnd={longPress.onTouchEnd}
+      onTouchMove={longPress.onTouchMove}
+      onTouchCancel={longPress.onTouchCancel}
     >
       {!isExternal ? (
         <button
@@ -120,11 +99,6 @@ export function TodoRow({ todo, onEdit, showSource, occurrenceDeadline }: Props)
 
       <div className="row__main">
         <div className="row__title-wrap">
-          {todo.pinned && !isVirtual && (
-            <span className="row__title-icon" aria-label={t('row.pinned')} title={t('row.pinned')}>
-              <IconStarFill width={11} height={11} />
-            </span>
-          )}
           {todo.recurrence && todo.recurrence !== 'none' && (
             <span
               className="row__title-icon"
@@ -157,9 +131,30 @@ export function TodoRow({ todo, onEdit, showSource, occurrenceDeadline }: Props)
         {todo.completedAt ? t('row.done') : formatRowTime(remaining)}
       </div>
 
-      <div className="row__actions" onClick={(e) => e.stopPropagation()}>
-        {!isExternal && <RowMenu items={menuItems} label={t('row.more')} />}
-      </div>
+      {!isExternal && (
+        <div className="row__actions" onClick={(e) => e.stopPropagation()}>
+          {!isVirtual && (
+            <button
+              type="button"
+              className={'row__action' + (todo.pinned ? ' row__action--active' : '')}
+              aria-label={todo.pinned ? t('row.unpin') : t('row.pin')}
+              title={todo.pinned ? t('row.unpin') : t('row.pin')}
+              onClick={() => togglePin(todo.id)}
+            >
+              {todo.pinned ? <IconStarFill width={14} height={14} /> : <IconStar width={14} height={14} />}
+            </button>
+          )}
+          <button
+            type="button"
+            className="row__action"
+            aria-label={isVirtual ? t('row.edit.parent') : t('row.edit')}
+            title={isVirtual ? t('row.edit.parent') : t('row.edit')}
+            onClick={() => onEdit(todo)}
+          >
+            <IconEdit width={14} height={14} />
+          </button>
+        </div>
+      )}
     </div>
   )
 }

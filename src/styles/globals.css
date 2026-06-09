@@ -541,80 +541,34 @@ kbd {
 .row__actions {
   display: inline-flex;
   gap: 2px;
-  opacity: 0;
+  opacity: 0.45;
   transition: opacity var(--dur-fast);
 }
 .row:hover .row__actions,
 .row:focus-within .row__actions { opacity: 1; }
 .row__action {
-  width: 28px; height: 28px;
+  width: 30px; height: 30px;
   display: inline-flex; align-items: center; justify-content: center;
   border-radius: 8px;
+  background: transparent;
+  border: none;
   color: var(--fg-muted);
+  cursor: pointer;
   transition: color var(--dur-fast), background var(--dur-fast);
 }
 [data-theme="cyberpunk"] .row__action { border-radius: 3px; }
 .row__action:hover { color: var(--fg); background: var(--bg); }
-.row__action--danger:hover { color: var(--u-critical); }
-
-/* ─── kebab dropdown menu on a row ─── */
-.row-menu-wrap {
-  position: relative;
-  display: inline-flex;
+.row__action--active {
+  color: var(--accent);
 }
-.row-menu {
-  position: absolute;
-  top: calc(100% + 6px);
-  right: 0;
-  z-index: 5;
-  min-width: 144px;
-  padding: 4px;
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  background: var(--bg-popover);
-  border: 1px solid var(--hairline-strong);
-  border-radius: 10px;
-  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.14), 0 1px 0 var(--hairline);
-  animation: rowMenuIn 160ms cubic-bezier(.2, .8, .2, 1);
-}
-[data-theme="cyberpunk"] .row-menu { border-radius: 4px; }
-@keyframes rowMenuIn {
-  from { opacity: 0; transform: translateY(-4px) scale(0.98); }
-  to   { opacity: 1; transform: none; }
-}
-.row-menu__item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 9px 12px;
-  border-radius: 6px;
-  font-size: 13px;
-  color: var(--fg);
-  text-align: left;
-  transition: background var(--dur-fast), color var(--dur-fast);
-  white-space: nowrap;
-}
-[data-theme="cyberpunk"] .row-menu__item { border-radius: 3px; }
-.row-menu__item:hover,
-.row-menu__item:focus-visible { background: var(--bg-2); outline: none; }
-.row-menu__item--danger { color: var(--u-critical); }
-.row-menu__item--danger:hover { background: color-mix(in srgb, var(--u-critical) 10%, transparent); }
-.row-menu__icon {
-  width: 16px; height: 16px;
-  display: inline-flex; align-items: center; justify-content: center;
-  color: var(--fg-muted);
-  flex-shrink: 0;
-}
-.row-menu__item:hover .row-menu__icon { color: var(--fg-2); }
-.row-menu__item--danger .row-menu__icon { color: var(--u-critical); }
+.row__action--active:hover { background: color-mix(in srgb, var(--accent) 8%, transparent); }
 
 @media (max-width: 600px) {
   .row { gap: 10px; padding: 12px 10px; margin: 0 -10px; min-height: 60px; }
   .row__count { font-size: 13px; }
   .row:hover { background: var(--bg-2); }
-  .row__actions { opacity: 1; }
-  .row__action { width: 36px; height: 36px; }
+  .row__actions { opacity: 1; gap: 4px; }
+  .row__action { width: 34px; height: 34px; }
 }
 
 /* =====================================================
@@ -2271,7 +2225,7 @@ kbd {
 /* Apple-style toggle switch */
 .switch {
   position: relative;
-  width: 44px; height: 26px;
+  width: 40px; height: 24px;
   border-radius: 999px;
   background: var(--bg);
   border: 1px solid var(--hairline);
@@ -2282,7 +2236,7 @@ kbd {
 .switch__thumb {
   position: absolute;
   top: 2px; left: 2px;
-  width: 20px; height: 20px;
+  width: 18px; height: 18px;
   border-radius: 50%;
   background: var(--bg-popover);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
@@ -2293,7 +2247,7 @@ kbd {
   border-color: var(--accent);
 }
 .switch--on .switch__thumb {
-  transform: translateX(18px);
+  transform: translateX(16px);
   background: var(--on-accent);
 }
 [data-theme="cyberpunk"] .switch { border-radius: 4px; }
@@ -2519,31 +2473,36 @@ kbd {
    ───────────────────────────────────────────── */
 .em-tabs {
   display: inline-flex;
-  align-self: flex-start;
-  margin: 4px 0 0;
+  align-self: center;
+  margin: 0 auto;
   padding: 3px;
   background: var(--bg-2);
-  border-radius: 9px;
+  border-radius: 10px;
+  gap: 2px;
 }
-[data-theme="cyberpunk"] .em-tabs { border-radius: 3px; }
+[data-theme="cyberpunk"] .em-tabs { border-radius: 4px; }
 .em-tabs__tab {
   flex: 0 0 auto;
-  padding: 6px 14px;
-  border-radius: 7px;
-  font-size: 12.5px;
+  padding: 7px 20px;
+  border-radius: 8px;
+  font-family: var(--font-body);
+  font-size: 13px;
   font-weight: 500;
   color: var(--fg-2);
   background: transparent;
   transition: background var(--dur-fast), color var(--dur-fast);
+  min-width: 88px;
+  text-align: center;
 }
 .em-tabs__tab:hover { color: var(--fg); }
 .em-tabs__tab--active {
   background: var(--bg-popover);
   color: var(--fg);
-  box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05), 0 1px 1px rgba(0,0,0,0.04);
 }
 [data-theme="paper"] .em-tabs__tab--active { color: var(--accent); }
-[data-theme="cyberpunk"] .em-tabs__tab { border-radius: 2px; }
+[data-theme="cyberpunk"] .em-tabs__tab { border-radius: 3px; }
+[data-theme="cyberpunk"] .em-tabs__tab--active { color: var(--accent); box-shadow: 0 0 8px color-mix(in srgb, var(--accent) 40%, transparent); }
 
 /* ─────────────────────────────────────────────
    Theme picker · HIG preview tiles
@@ -2956,21 +2915,23 @@ kbd {
 .fab {
   display: inline-flex;
   align-items: center; justify-content: center;
-  padding: 14px 22px;
-  border-radius: 24px;
-  background: var(--accent);
-  color: var(--on-accent);
+  padding: 0 16px;
+  height: 44px;
+  border-radius: 22px;
+  background: var(--bg-popover);
+  color: var(--accent);
   border: 1px solid var(--hairline);
-  box-shadow: var(--elev-2);
+  box-shadow: var(--elev-1);
   cursor: pointer;
-  transition: transform var(--dur-fast) var(--ease), filter var(--dur-fast);
+  transition: transform var(--dur-fast) var(--ease), background var(--dur-fast);
   flex-shrink: 0;
-  align-self: stretch;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
 }
-[data-theme="cyberpunk"] .fab { border-radius: 8px; }
-.fab:hover { transform: translateY(-1px); filter: brightness(1.06); }
-.fab:active { transform: translateY(0) scale(0.96); }
-.fab:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 40%, transparent); outline-offset: 2px; }
+[data-theme="cyberpunk"] .fab { border-radius: 6px; }
+.fab:hover { background: var(--bg-2); transform: translateY(-1px); }
+.fab:active { transform: translateY(0) scale(0.97); }
+.fab:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .fab svg { width: 18px; height: 18px; }
 
 /* ─────────────────────────────────────────────
@@ -3084,12 +3045,12 @@ kbd {
 .reminder-row__trailing {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
 }
 .reminder-row__delete {
-  width: 28px; height: 28px;
+  width: 26px; height: 26px;
   display: inline-flex; align-items: center; justify-content: center;
-  border-radius: 8px;
+  border-radius: 6px;
   background: transparent;
   border: none;
   color: var(--fg-muted);
@@ -3105,5 +3066,31 @@ kbd {
   color: var(--u-critical);
 }
 @media (hover: none) and (pointer: coarse) {
-  .reminder-row__delete { opacity: 0.55; }
+  .reminder-row__delete { opacity: 0.6; }
 }
+/* Tighter min-height for reminder rows */
+.hig-row:has(.reminder-row__trailing) {
+  min-height: 44px;
+  padding-top: 8px; padding-bottom: 8px;
+}
+
+/* Destructive Delete row at the bottom of the EditModal Details tab */
+.edit__delete {
+  margin-top: 8px;
+  align-self: stretch;
+  display: inline-flex; align-items: center; justify-content: center;
+  gap: 8px;
+  padding: 12px 14px;
+  background: var(--bg-2);
+  color: var(--u-critical);
+  border: none;
+  border-radius: var(--radius-card);
+  font-family: var(--font-body);
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background var(--dur-fast);
+}
+[data-theme="cyberpunk"] .edit__delete { border-radius: 6px; }
+.edit__delete:hover { background: color-mix(in srgb, var(--u-critical) 10%, var(--bg-2)); }
+.edit__delete:active { transform: scale(0.99); }

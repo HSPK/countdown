@@ -13,7 +13,7 @@ import { validateTodoEdit } from '../lib/editValidation'
 import { useT } from '../lib/i18n'
 import { useEscToClose } from '../hooks/useEscToClose'
 import { useSaveShortcut } from '../hooks/useSaveShortcut'
-import { IconX } from './Icons'
+import { IconTrash, IconX } from './Icons'
 
 interface Props {
   todo: Todo | null
@@ -35,6 +35,7 @@ function recurrenceShort(r: Recurrence, t: ReturnType<typeof useT>): string {
 
 export function EditModal({ todo, onClose }: Props) {
   const updateTodo = useTodos((s) => s.updateTodo)
+  const removeTodo = useTodos((s) => s.removeTodo)
   const t = useT()
   const [tab, setTab] = useState<EditTab>('details')
   const [title, setTitle] = useState('')
@@ -90,6 +91,13 @@ export function EditModal({ todo, onClose }: Props) {
   useSaveShortcut(save, open)
 
   if (!todo) return null
+
+  const onDelete = () => {
+    if (confirm(t('row.delete.confirm', { title: todo.title }))) {
+      removeTodo(todo.id)
+      onClose()
+    }
+  }
 
   const tagsSummary = tags.length
     ? tags.slice(0, 4).map((tag) => `#${tag}`).join(' ') + (tags.length > 4 ? ' …' : '')
@@ -213,6 +221,15 @@ export function EditModal({ todo, onClose }: Props) {
                   emptyLabel={t('edit.notes.empty')}
                 />
               )}
+
+              <button
+                type="button"
+                className="edit__delete"
+                onClick={onDelete}
+              >
+                <IconTrash width={14} height={14} />
+                <span>{t('edit.delete')}</span>
+              </button>
             </>
           ) : (
             <RemindersField value={reminders} onChange={setReminders} />

@@ -3,30 +3,23 @@ import { persist } from 'zustand/middleware'
 import { uid } from '../lib/id'
 
 export interface ThemeFile {
-  id: string                       // unique id (slugified or generated)
-  name: string                     // display name
-  hint?: string                    // small description
-  base?: 'mono-light' | 'mono-dark' | 'paper' | 'cyberpunk'  // optional inheritance
-  tokens: Record<string, string>   // CSS custom properties
-}
-
-export interface NotifierPrefs {
-  enabled: boolean
+  id: string
+  name: string
+  hint?: string
+  base?: 'mono-light' | 'mono-dark' | 'paper' | 'cyberpunk'
+  tokens: Record<string, string>
 }
 
 interface CustomThemesState {
   themes: ThemeFile[]
-  notifier: NotifierPrefs
   addTheme: (t: ThemeFile) => void
   removeTheme: (id: string) => void
-  setNotifier: (p: Partial<NotifierPrefs>) => void
 }
 
 export const useCustomThemes = create<CustomThemesState>()(
   persist(
     (set, get) => ({
       themes: [],
-      notifier: { enabled: false },
       addTheme: (t) => {
         const id = t.id || `custom-${uid().slice(0, 6)}`
         const next = { ...t, id }
@@ -35,12 +28,11 @@ export const useCustomThemes = create<CustomThemesState>()(
       },
       removeTheme: (id) =>
         set({ themes: get().themes.filter((t) => t.id !== id) }),
-      setNotifier: (p) =>
-        set({ notifier: { ...get().notifier, ...p } }),
     }),
     {
       name: 'countdown.themes.v1',
       version: 1,
+      partialize: (s) => ({ themes: s.themes }),
     },
   ),
 )

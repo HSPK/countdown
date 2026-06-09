@@ -4,6 +4,7 @@ import { useTodos } from '../store/todos'
 import { TodoRow } from './TodoRow'
 import { Hero } from './Hero'
 import { EditModal } from './EditModal'
+import { ListSection } from './ListSection'
 import { useNow } from '../hooks/useNow'
 import { useT } from '../lib/i18n'
 import { bucketOf, type Bucket } from '../lib/time'
@@ -55,11 +56,7 @@ export function HomeTab() {
         {([['today', today], ['week', week], ['month', month]] as Array<[Bucket, VirtualOccurrence[]]>).map(([b, arr]) => {
           if (arr.length === 0) return null
           return (
-            <section className="list__section" key={b}>
-              <header className="list__head">
-                <h2 className="list__head-title">{t(BUCKET_KEYS[b])}</h2>
-                <span className="list__head-count">{arr.length}</span>
-              </header>
+            <ListSection key={b} title={t(BUCKET_KEYS[b])} count={arr.length}>
               {arr.map((o) => (
                 <TodoRow
                   key={o.id}
@@ -68,7 +65,7 @@ export function HomeTab() {
                   occurrenceDeadline={o.isVirtual ? o.deadline : undefined}
                 />
               ))}
-            </section>
+            </ListSection>
           )
         })}
 

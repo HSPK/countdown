@@ -2,17 +2,21 @@ import { useRef } from 'react'
 import { useTodos } from '../store/todos'
 import { useSettings, THEMES, type ThemeName } from '../store/settings'
 import { useCustomThemes, parseThemeJson } from '../store/customThemes'
+import { useNotifierPrefs } from '../store/notifierPrefs'
 import { SourceManager } from './SourceManager'
+import { PresetEditor } from './PresetEditor'
+import { FeedbackSettings } from './FeedbackSettings'
+import { HigGroup, HigRow, HigRowSelect, HigRowToggle, HigSection } from './HigList'
 import { downloadJson, makeExportPayload, parseTodosJson, readFileAsText } from '../lib/portable'
 import { requestNotificationPermission } from '../hooks/useNotifier'
 import { LOCAL_SOURCE_ID } from '../store/sources'
 import { useT, LANGS, type Lang } from '../lib/i18n'
 import {
   IconCheck, IconTrash, IconBell, IconDownload, IconUpload,
-  IconHelp, IconChevronRight, IconExternal,
+  IconHelp, IconExternal,
 } from './Icons'
 
-const APP_VERSION = '0.27'
+const APP_VERSION = '0.28'
 
 export function SettingsTab() {
   const theme = useSettings((s) => s.theme)
@@ -25,12 +29,14 @@ export function SettingsTab() {
   const customThemes = useCustomThemes((s) => s.themes)
   const removeTheme = useCustomThemes((s) => s.removeTheme)
   const addTheme = useCustomThemes((s) => s.addTheme)
-  const notifier = useCustomThemes((s) => s.notifier)
-  const setNotifier = useCustomThemes((s) => s.setNotifier)
+  const notifierEnabled = useNotifierPrefs((s) => s.enabled)
+  const setNotifierEnabled = useNotifierPrefs((s) => s.setEnabled)
   const t = useT()
 
   const fileRef = useRef<HTMLInputElement>(null)
   const themeFileRef = useRef<HTMLInputElement>(null)
+
+  const localCount = todos.filter((todo) => todo.sourceId === LOCAL_SOURCE_ID).length
 
   /* -- Data import / export -- */
   const exportLocal = () => {
@@ -62,14 +68,14 @@ export function SettingsTab() {
   }
 
   /* -- Notifications -- */
-  const toggleNotifier = async () => {
-    if (notifier.enabled) {
-      setNotifier({ enabled: false })
+  const toggleNotifier = async (next: boolean) => {
+    if (!next) {
+      setNotifierEnabled(false)
       return
     }
     const perm = await requestNotificationPermission()
     if (perm === 'granted') {
-      setNotifier({ enabled: true })
+      setNotifierEnabled(true)
     } else if (perm === 'denied') {
       alert(t('settings.notifier.denied'))
     } else if (perm === 'unsupported') {
@@ -81,7 +87,7 @@ export function SettingsTab() {
     <div className="settings">
 
       {/* Theme */}
-      <Section title={t('settings.theme')}>
+      <HigSection title={t('settings.theme')} footer={t('settings.theme.footer')}>
         <div className="theme-picker__grid">
           {THEMES.map((tm) => (
             <ThemeChooserCard
@@ -108,6 +114,7 @@ export function SettingsTab() {
                   removeTheme(tm.id)
                 }
               }}
+              deleteLabel={t('settings.theme.remove', { name: tm.name })}
             />
           ))}
         </div>
@@ -123,55 +130,58 @@ export function SettingsTab() {
             e.target.value = ''
           }}
         />
-        <ListRow
-          icon={<IconUpload width={14} height={14} />}
-          title={t('settings.theme.import')}
-          desc={t('settings.theme.import.desc')}
-          onClick={() => themeFileRef.current?.click()}
-        />
-      </Section>
+        <HigGroup>
+          <HigRow
+            icon={<IconUpload width={14} height={14} />}
+            title={t('settings.theme.import')}
+            onPress={() => themeFileRef.current?.click()}
+          />
+        </HigGroup>
+      </HigSection>
 
       {/* Language */}
-      <Section title={t('settings.lang')}>
-        <div className="edit__segmented" style={{ alignSelf: 'flex-start' }}>
+      <HigSection title={t('settings.lang')}>
+        <HigGroup>
           {LANGS.map((l) => (
-            <button
+            <HigRowSelect
               key={l.id}
-              type="button"
-              className="edit__seg-btn"
-              aria-pressed={lang === l.id}
-              onClick={() => setLang(l.id as Lang)}
-            >
-              {l.name}
-            </button>
+              title={l.name}
+              active={lang === l.id}
+              onPress={() => setLang(l.id as Lang)}
+            />
           ))}
-        </div>
-      </Section>
+        </HigGroup>
+      </HigSection>
 
       {/* Sources */}
-      <Section title={t('settings.sources')}>
+      <HigSection title={t('settings.sources')}>
         <SourceManager />
-      </Section>
+      </HigSection>
+
+      {/* Quick chips (composer presets) */}
+      <HigSection title={t('settings.chips')}>
+        <PresetEditor />
+      </HigSection>
+
+      {/* Feedback (sound / vibration) */}
+      <HigSection title={t('settings.feedback')}>
+        <FeedbackSettings />
+      </HigSection>
 
       {/* Notifications */}
-      <Section title={t('settings.notifier')}>
-        <ListRow
-          icon={<IconBell width={14} height={14} />}
-          title={notifier.enabled ? t('settings.notifier.on') : t('settings.notifier.off')}
-          desc={notifier.enabled
-            ? t('settings.notifier.on.desc')
-            : t('settings.notifier.off.desc')}
-          right={
-            <span className={`pill-toggle${notifier.enabled ? ' pill-toggle--on' : ''}`}>
-              {notifier.enabled ? t('settings.notifier.disable') : t('settings.notifier.enable')}
-            </span>
-          }
-          onClick={toggleNotifier}
-        />
-      </Section>
+      <HigSection title={t('settings.notifier')}>
+        <HigGroup>
+          <HigRowToggle
+            icon={<IconBell width={14} height={14} />}
+            title={t('settings.notifier.title')}
+            checked={notifierEnabled}
+            onChange={toggleNotifier}
+          />
+        </HigGroup>
+      </HigSection>
 
       {/* Import / Export */}
-      <Section title={t('settings.io')}>
+      <HigSection title={t('settings.io')}>
         <input
           ref={fileRef}
           type="file"
@@ -183,93 +193,53 @@ export function SettingsTab() {
             e.target.value = ''
           }}
         />
-        <ListRow
-          icon={<IconDownload width={14} height={14} />}
-          title={t('settings.io.export')}
-          desc={t('settings.io.export.desc', { count: todos.filter((todo) => todo.sourceId === LOCAL_SOURCE_ID).length })}
-          onClick={exportLocal}
-        />
-        <ListRow
-          icon={<IconUpload width={14} height={14} />}
-          title={t('settings.io.import')}
-          desc={t('settings.io.import.desc')}
-          onClick={() => fileRef.current?.click()}
-        />
-      </Section>
+        <HigGroup>
+          <HigRow
+            icon={<IconDownload width={14} height={14} />}
+            title={t('settings.io.export')}
+            trailing={<span className="hig-row__value">{localCount}</span>}
+            onPress={exportLocal}
+          />
+          <HigRow
+            icon={<IconUpload width={14} height={14} />}
+            title={t('settings.io.import')}
+            onPress={() => fileRef.current?.click()}
+          />
+        </HigGroup>
+      </HigSection>
 
       {/* Help + About */}
-      <Section title={t('settings.help')}>
-        <ListRow
-          icon={<IconHelp width={14} height={14} />}
-          title={t('settings.help.open')}
-          desc={t('settings.help.open.desc')}
-          onClick={() => setHelp('toc')}
-        />
-        <ListRow
-          icon={<IconExternal width={14} height={14} />}
-          title={t('settings.about')}
-          desc={t('settings.about.desc', { version: APP_VERSION })}
-        />
-      </Section>
+      <HigSection title={t('settings.help')}>
+        <HigGroup>
+          <HigRow
+            icon={<IconHelp width={14} height={14} />}
+            title={t('settings.help.open')}
+            onPress={() => setHelp('toc')}
+          />
+          <HigRow
+            icon={<IconExternal width={14} height={14} />}
+            title={t('settings.about')}
+            trailing={<span className="hig-row__value">v{APP_VERSION}</span>}
+          />
+        </HigGroup>
+      </HigSection>
 
     </div>
   )
 }
 
-function Section({
-  title, children,
-}: { title: string; children: React.ReactNode }) {
-  return (
-    <section className="settings__section">
-      <header className="settings__head2">
-        <h2 className="settings__h2">{title}</h2>
-      </header>
-      <div className="settings__body2">{children}</div>
-    </section>
-  )
-}
-
-function ListRow({
-  icon, title, desc, onClick, right,
-}: {
-  icon?: React.ReactNode
-  title: string
-  desc?: string
-  onClick?: () => void
-  right?: React.ReactNode
-}) {
-  return (
-    <button
-      type="button"
-      className={'list-row' + (onClick ? ' list-row--clickable' : '')}
-      onClick={onClick}
-      disabled={!onClick}
-    >
-      {icon && <span className="list-row__icon" aria-hidden>{icon}</span>}
-      <span className="list-row__main">
-        <span className="list-row__title">{title}</span>
-        {desc && <span className="list-row__desc">{desc}</span>}
-      </span>
-      {right
-        ? <span className="list-row__right">{right}</span>
-        : onClick && <span className="list-row__chev"><IconChevronRight width={14} height={14} /></span>}
-    </button>
-  )
-}
-
 function ThemeChooserCard({
-  id, name, hint, active, custom, onSelect, onDelete,
+  id, name, hint, active, custom, onSelect, onDelete, deleteLabel,
 }: {
   id: string; name: string; hint?: string; active: boolean;
-  custom?: boolean; onSelect: () => void; onDelete?: () => void
+  custom?: boolean; onSelect: () => void; onDelete?: () => void; deleteLabel?: string
 }) {
   return (
-    <div style={{ position: 'relative' }}>
+    <div className="theme-card-wrap">
       <button
         className={`theme-card theme-card--${custom ? 'mono-light' : id}`}
         aria-pressed={active}
         onClick={onSelect}
-        style={{ width: '100%' }}
       >
         <span className="theme-card__check"><IconCheck width={12} height={12} /></span>
         <span className="theme-card__preview">Aa</span>
@@ -279,16 +249,10 @@ function ThemeChooserCard({
       {custom && onDelete && (
         <button
           type="button"
+          className="theme-card__delete"
           onClick={onDelete}
-          aria-label="移除主题"
-          title="移除主题"
-          style={{
-            position: 'absolute', top: 4, right: 4,
-            width: 22, height: 22, borderRadius: 4,
-            color: 'var(--fg-muted)',
-            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-            opacity: 0.5,
-          }}
+          aria-label={deleteLabel ?? ''}
+          title={deleteLabel ?? ''}
         >
           <IconTrash width={11} height={11} />
         </button>

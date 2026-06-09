@@ -1,10 +1,23 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useSources, LOCAL_SOURCE_ID, type Source } from '../store/sources'
 import { useTodos } from '../store/todos'
-import { fetchSubscription } from '../lib/portable'
+import { refreshSource } from '../lib/subscriptions'
 import { formatAbsolute } from '../lib/time'
 import { useT } from '../lib/i18n'
+import { useEscToClose } from '../hooks/useEscToClose'
+import { HigGroup, HigRow } from './HigList'
 import { IconTrash, IconPlus, IconX } from './Icons'
+
+type Indicator = 'ok' | 'fetching' | 'err' | 'off'
+
+function indicatorFor(s: Source): Indicator {
+  if (!s.enabled) return 'off'
+  if (s.type === 'local') return 'ok'
+  if (s.status === 'fetching') return 'fetching'
+  if (s.status === 'error') return 'err'
+  if (s.status === 'ok') return 'ok'
+  return 'off'
+}
 
 export function SourceManager() {
   const sources = useSources((s) => s.sources)
@@ -18,78 +31,63 @@ export function SourceManager() {
 
   const remove = useSources((s) => s.remove)
   const toggle = useSources((s) => s.toggle)
-  const setStatus = useSources((s) => s.setStatus)
   const dropSource = useTodos((s) => s.dropSource)
-  const replaceSource = useTodos((s) => s.replaceSource)
 
   const [adding, setAdding] = useState(false)
 
-  const refresh = async (src: Source) => {
-    if (src.type !== 'url' || !src.url) return
-    setStatus(src.id, { status: 'fetching', lastError: undefined })
-    try {
-      const items = await fetchSubscription(src.url, src.id)
-      replaceSource(src.id, items)
-      setStatus(src.id, { status: 'ok', lastFetched: Date.now() })
-    } catch (e) {
-      setStatus(src.id, { status: 'error', lastError: e instanceof Error ? e.message : String(e) })
-    }
-  }
-
   return (
-    <div className="settings__body">
-      {sources.map((s) => {
-        const count = s.id === LOCAL_SOURCE_ID ? localCount : (counts.get(s.id) ?? 0)
-        const indicator =
-          !s.enabled ? 'off' :
-          s.status === 'fetching' ? 'fetching' :
-          s.status === 'error' ? 'err' :
-          s.status === 'ok' || s.type === 'local' ? 'ok' : 'off'
+    <>
+      <HigGroup>
+        {sources.map((s) => {
+          const count = s.id === LOCAL_SOURCE_ID ? localCount : (counts.get(s.id) ?? 0)
+          const indicator = indicatorFor(s)
+          const subtitle = s.type === 'local'
+            ? t('sources.local.storage')
+            : (
+              <>
+                <span className="source-meta__url">{s.url}</span>
+                {s.lastFetched && <> · {t('sources.last.ok', { time: formatAbsolute(s.lastFetched) })}</>}
+                {s.status === 'error' && s.lastError && (
+                  <span className="source-meta__error"> · {t('sources.last.error', { error: s.lastError })}</span>
+                )}
+              </>
+            )
 
-        return (
-          <div className="source-row" key={s.id}>
-            <span className={`source-row__indicator source-row__indicator--${indicator}`} aria-hidden />
-            <div>
-              <div className="source-row__name">
-                {s.name}
-                <span style={{ marginLeft: 10, color: 'var(--fg-muted)', fontFamily: 'var(--font-mono)', fontSize: 11 }}>
-                  {t('sources.count', { count })}
+          return (
+            <HigRow
+              key={s.id}
+              icon={<StatusDot indicator={indicator} />}
+              title={
+                <span className="source-title">
+                  <span>{s.name}</span>
+                  <span className="source-title__count">{t('sources.count', { count })}</span>
                 </span>
-              </div>
-              <div className="source-row__meta">
-                {s.type === 'local'
-                  ? t('sources.local.storage')
-                  : <>
-                      {s.url}
-                      {s.lastFetched && <> · {t('sources.last.ok', { time: formatAbsolute(s.lastFetched) })}</>}
-                      {s.status === 'error' && s.lastError && (
-                        <span style={{ color: 'var(--u-critical)' }}> · {t('sources.last.error', { error: s.lastError })}</span>
-                      )}
-                    </>}
-              </div>
-            </div>
-            <div className="source-row__actions">
-              {s.type === 'url' && (
-                <>
+              }
+              subtitle={subtitle}
+              trailing={s.type === 'url' && (
+                <div className="hig-icon-cluster" onClick={(e) => e.stopPropagation()}>
                   <button
-                    className="source-row__btn"
+                    type="button"
+                    className="hig-icon-btn"
                     title={s.enabled ? t('sources.disable') : t('sources.enable')}
-                    onClick={() => toggle(s.id)}
                     aria-label={t('sources.toggle')}
+                    onClick={() => toggle(s.id)}
                   >
-                    {s.enabled ? '○' : '●'}
+                    {s.enabled ? <IconCircle /> : <IconCircleFill />}
                   </button>
                   <button
-                    className="source-row__btn"
+                    type="button"
+                    className="hig-icon-btn"
                     title={t('sources.refresh.now')}
-                    onClick={() => refresh(s)}
-                    disabled={s.status === 'fetching'}
                     aria-label={t('sources.refresh')}
+                    disabled={s.status === 'fetching'}
+                    onClick={() => refreshSource(s)}
                   >
                     <RefreshIcon spinning={s.status === 'fetching'} />
                   </button>
                   <button
-                    className="source-row__btn source-row__btn--danger"
+                    type="button"
+                    className="hig-icon-btn hig-icon-btn--danger"
                     title={t('sources.delete')}
                     aria-label={t('sources.delete')}
                     onClick={() => {
@@ -99,33 +97,54 @@ export function SourceManager() {
                       }
                     }}
                   >
-                    <IconTrash />
+                    <IconTrash width={14} height={14} />
                   </button>
-                </>
+                </div>
               )}
-            </div>
-          </div>
-        )
-      })}
-
-      <div style={{ paddingTop: 12 }}>
-        <button className="btn" onClick={() => setAdding(true)}>
-          <IconPlus width={14} height={14} style={{ marginRight: 6, verticalAlign: '-2px' }} />
-          {t('sources.add')}
-        </button>
-      </div>
+            />
+          )
+        })}
+        <HigRow
+          icon={
+            <span className="hig-row__add-icon">
+              <IconPlus width={12} height={12} />
+            </span>
+          }
+          title={<span className="hig-row__add-label">{t('sources.add')}</span>}
+          onPress={() => setAdding(true)}
+        />
+      </HigGroup>
 
       {adding && <AddSourceModal onClose={() => setAdding(false)} onAdded={(id) => {
         const s = useSources.getState().sources.find((x) => x.id === id)
-        if (s) refresh(s)
+        if (s) refreshSource(s)
       }} />}
-    </div>
+    </>
+  )
+}
+
+function StatusDot({ indicator }: { indicator: Indicator }) {
+  return <span className={`status-dot status-dot--${indicator}`} aria-hidden />
+}
+
+function IconCircle() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <circle cx="12" cy="12" r="8" />
+    </svg>
+  )
+}
+function IconCircleFill() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+      <circle cx="12" cy="12" r="8" />
+    </svg>
   )
 }
 
 function RefreshIcon({ spinning }: { spinning: boolean }) {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"
          strokeLinecap="round" strokeLinejoin="round"
          style={{ animation: spinning ? 'spin 1.2s linear infinite' : undefined }}>
       <path d="M21 12a9 9 0 1 1-3-6.7" />
@@ -141,11 +160,7 @@ function AddSourceModal({ onClose, onAdded }: { onClose: () => void; onAdded: (i
   const [name, setName] = useState('')
   const [url, setUrl] = useState('')
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [onClose])
+  useEscToClose(onClose)
 
   const submit = () => {
     if (!url.trim()) return

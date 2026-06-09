@@ -3,6 +3,7 @@ import { useTodos } from '../store/todos'
 import { useSettings } from '../store/settings'
 import { useSources } from '../store/sources'
 import { useNowFast } from '../hooks/useNow'
+import { useEscToClose } from '../hooks/useEscToClose'
 import { useT } from '../lib/i18n'
 import { diffParts, formatAbsolute, pad, progressPct, urgencyOf } from '../lib/time'
 import { IconX, IconMaximize, IconMinimize } from './Icons'
@@ -95,15 +96,9 @@ export function FocusView() {
     }
   }, [focusId])
 
-  /* ESC closes focus */
-  useEffect(() => {
-    if (!focusId) return
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !document.fullscreenElement) setFocus(null)
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [focusId, setFocus])
+  /* ESC closes focus (but never while in browser-native fullscreen — that
+     keypress is reserved by the browser itself to leave fullscreen). */
+  useEscToClose(() => setFocus(null), !!focusId, { ignoreInFullscreen: true })
 
   /* Track browser fullscreen state */
   useEffect(() => {

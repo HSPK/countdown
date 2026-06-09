@@ -1,6 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTodos } from '../store/todos'
-import { ABSOLUTE_PRESETS, RELATIVE_PRESETS, type AbsolutePreset } from '../lib/datePresets'
+import { useChipPresets } from '../store/chipPresets'
+import { resolveAbsolute, type AbsolutePreset, type RelativePreset } from '../lib/chipResolver'
+import {
+  defaultChoice,
+  extractTags,
+  flushPending,
+  resolveDeadline,
+  type Choice,
+} from '../lib/composerInput'
+import { triggerSubmitFeedback } from '../lib/feedback'
 import { useT } from '../lib/i18n'
 import { formatHM, pad } from '../lib/time'
 import { WheelPicker } from './WheelPicker'
@@ -10,59 +19,18 @@ interface Props {
   inputRef?: React.MutableRefObject<HTMLInputElement | null>
 }
 
-type Choice =
-  | { kind: 'relative'; presetId: string; offsetMs: number }
-  | { kind: 'absolute'; presetId: string }
-  | { kind: 'custom'; ts: number }
-
-function defaultChoice(): Choice {
-  // Default = tomorrow evening 18:00 (absolute)
-  return { kind: 'absolute', presetId: 'tomorrow-pm' }
-}
-
-const TAG_RE = /#([\p{L}\p{N}_-]+)(?=\s)/gu
-function extractTags(input: string, existing: string[]): { cleaned: string; added: string[] } {
-  const added: string[] = []
-  let cleaned = input
-  let m: RegExpExecArray | null
-  TAG_RE.lastIndex = 0
-  while ((m = TAG_RE.exec(input)) !== null) {
-    const tag = m[1]
-    if (!existing.includes(tag) && !added.includes(tag)) {
-      added.push(tag)
-    }
-    cleaned = cleaned.replace(m[0], '')
-  }
-  cleaned = cleaned.replace(/[\u00A0\s]{2,}/g, ' ').replace(/^\s+/, '')
-  return { cleaned, added }
-}
-function flushPending(input: string, existing: string[]): { title: string; tags: string[] } {
-  const re = /#([\p{L}\p{N}_-]+)/gu
-  const newTags = [...existing]
-  const cleaned = input.replace(re, (_, tag: string) => {
-    if (!newTags.includes(tag)) newTags.push(tag)
-    return ''
-  }).replace(/\s+/g, ' ').trim()
-  return { title: cleaned, tags: newTags }
-}
-
-/* Resolve a Choice to an absolute deadline at THIS moment.
-   Relative presets fire from `now()` (not from when the chip was clicked). */
-function resolveDeadline(choice: Choice, now: Date): number {
-  if (choice.kind === 'relative') return now.getTime() + choice.offsetMs
-  if (choice.kind === 'absolute') {
-    const p = ABSOLUTE_PRESETS.find((x) => x.id === choice.presetId)
-    return (p ?? ABSOLUTE_PRESETS[2]).resolve(now).getTime()
-  }
-  return choice.ts
+function chipLabel(t: ReturnType<typeof useT>, p: { labelKey?: string; label: string }): string {
+  return p.labelKey ? t(p.labelKey) : p.label
 }
 
 export function Composer({ inputRef }: Props) {
   const addTodo = useTodos((s) => s.addTodo)
+  const relativePresets = useChipPresets((s) => s.relative)
+  const absolutePresets = useChipPresets((s) => s.absolute)
   const t = useT()
   const [text, setText] = useState('')
   const [tags, setTags] = useState<string[]>([])
-  const [choice, setChoice] = useState<Choice>(defaultChoice)
+  const [choice, setChoice] = useState<Choice>(() => defaultChoice(absolutePresets))
   const [showCalendar, setShowCalendar] = useState(false)
 
   const [hovering, setHovering] = useState(false)
@@ -80,14 +48,25 @@ export function Composer({ inputRef }: Props) {
   /* Refresh resolved absolute times every 20s so chip labels stay fresh */
   const [tick, setTick] = useState(0)
   useEffect(() => {
-    const t = window.setInterval(() => setTick((x) => x + 1), 20_000)
-    return () => window.clearInterval(t)
+    const id = window.setInterval(() => setTick((x) => x + 1), 20_000)
+    return () => window.clearInterval(id)
   }, [])
   const now = useMemo(() => new Date(), [tick])
   const resolvedAbsolute = useMemo(
-    () => ABSOLUTE_PRESETS.map((p) => ({ p, d: p.resolve(now) })),
-    [now],
+    () => absolutePresets.map((p) => ({ p, ts: resolveAbsolute(p, now) })),
+    [absolutePresets, now],
   )
+
+  /* If the chip backing the current choice gets deleted from Settings,
+     fall back to the new default so the time button never shows a ghost. */
+  useEffect(() => {
+    if (choice.kind === 'relative' && !relativePresets.some((p) => p.id === choice.presetId)) {
+      setChoice(defaultChoice(absolutePresets))
+    }
+    if (choice.kind === 'absolute' && !absolutePresets.some((p) => p.id === choice.presetId)) {
+      setChoice(defaultChoice(absolutePresets))
+    }
+  }, [relativePresets, absolutePresets, choice])
 
   useEffect(() => {
     if (!expanded) return
@@ -117,11 +96,12 @@ export function Composer({ inputRef }: Props) {
   const submit = () => {
     const { title, tags: finalTags } = flushPending(text, tags)
     const finalTitle = title || 'CountDown'
-    const deadline = resolveDeadline(choice, new Date())
+    const deadline = resolveDeadline(choice, new Date(), relativePresets, absolutePresets)
     addTodo({ title: finalTitle, deadline, tags: finalTags })
+    triggerSubmitFeedback()
     setText('')
     setTags([])
-    setChoice(defaultChoice())
+    setChoice(defaultChoice(absolutePresets))
     setShowCalendar(false)
     inRef.current?.focus()
   }
@@ -156,10 +136,8 @@ export function Composer({ inputRef }: Props) {
     }, 600)
   }
 
-  const pickRelative = (id: string) => {
-    const p = RELATIVE_PRESETS.find((x) => x.id === id)
-    if (!p) return
-    setChoice({ kind: 'relative', presetId: id, offsetMs: p.offsetMs })
+  const pickRelative = (p: RelativePreset) => {
+    setChoice({ kind: 'relative', presetId: p.id })
     setShowCalendar(false)
   }
   const pickAbsolute = (p: AbsolutePreset) => {
@@ -171,7 +149,7 @@ export function Composer({ inputRef }: Props) {
       setShowCalendar(false)
     } else {
       setShowCalendar(true)
-      const tentative = resolveDeadline(choice, new Date())
+      const tentative = resolveDeadline(choice, new Date(), relativePresets, absolutePresets)
       setChoice({ kind: 'custom', ts: tentative })
     }
   }
@@ -179,12 +157,12 @@ export function Composer({ inputRef }: Props) {
   /* Current label shown on the time button in the input row */
   const currentLabel = (() => {
     if (choice.kind === 'relative') {
-      const p = RELATIVE_PRESETS.find((x) => x.id === choice.presetId)
-      return p ? `+${t(p.labelKey)}` : t('composer.time')
+      const p = relativePresets.find((x) => x.id === choice.presetId)
+      return p ? `+${chipLabel(t, p)}` : t('composer.time')
     }
     if (choice.kind === 'absolute') {
       const r = resolvedAbsolute.find((x) => x.p.id === choice.presetId)
-      if (r) return `${t(r.p.labelKey)} ${formatHM(r.d.getTime())}`
+      if (r) return `${chipLabel(t, r.p)} ${formatHM(r.ts)}`
     }
     if (choice.kind === 'custom') {
       const d = new Date(choice.ts)
@@ -209,33 +187,35 @@ export function Composer({ inputRef }: Props) {
       <div className="compose-popover" data-open={expanded} aria-hidden={!expanded}>
         <div className="compose-expand">
 
-          <div className="compose-section">
-            <div className="compose-section__head">{t('composer.section.relative')}</div>
-            <div className="compose-section__chips" role="radiogroup" aria-label={t('composer.section.relative')}>
-              {RELATIVE_PRESETS.map((p) => {
-                const active = choice.kind === 'relative' && choice.presetId === p.id && !showCalendar
-                return (
-                  <button
-                    key={p.id}
-                    className="chip chip--rel"
-                    aria-pressed={active}
-                    role="radio"
-                    aria-checked={active}
-                    onClick={() => pickRelative(p.id)}
-                    title={t('preset.rel.title', { label: t(p.labelKey) })}
-                    tabIndex={expanded ? 0 : -1}
-                  >
-                    {t(p.labelKey)}
-                  </button>
-                )
-              })}
+          {relativePresets.length > 0 && (
+            <div className="compose-section">
+              <div className="compose-section__head">{t('composer.section.relative')}</div>
+              <div className="compose-section__chips" role="radiogroup" aria-label={t('composer.section.relative')}>
+                {relativePresets.map((p) => {
+                  const active = choice.kind === 'relative' && choice.presetId === p.id && !showCalendar
+                  return (
+                    <button
+                      key={p.id}
+                      className="chip chip--rel"
+                      aria-pressed={active}
+                      role="radio"
+                      aria-checked={active}
+                      onClick={() => pickRelative(p)}
+                      title={t('preset.rel.title', { label: chipLabel(t, p) })}
+                      tabIndex={expanded ? 0 : -1}
+                    >
+                      {chipLabel(t, p)}
+                    </button>
+                  )
+                })}
+              </div>
             </div>
-          </div>
+          )}
 
           <div className="compose-section">
             <div className="compose-section__head">{t('composer.section.absolute')}</div>
             <div className="compose-section__chips" role="radiogroup" aria-label={t('composer.section.absolute')}>
-              {resolvedAbsolute.map(({ p, d }) => {
+              {resolvedAbsolute.map(({ p, ts }) => {
                 const active = choice.kind === 'absolute' && choice.presetId === p.id && !showCalendar
                 return (
                   <button
@@ -245,11 +225,11 @@ export function Composer({ inputRef }: Props) {
                     role="radio"
                     aria-checked={active}
                     onClick={() => pickAbsolute(p)}
-                    title={`${t(p.labelKey)} · ${formatHM(d.getTime())}`}
+                    title={`${chipLabel(t, p)} · ${formatHM(ts)}`}
                     tabIndex={expanded ? 0 : -1}
                   >
-                    <span className="chip__label">{t(p.labelKey)}</span>
-                    <span className="chip__time">{formatHM(d.getTime())}</span>
+                    <span className="chip__label">{chipLabel(t, p)}</span>
+                    <span className="chip__time">{formatHM(ts)}</span>
                   </button>
                 )
               })}

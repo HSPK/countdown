@@ -25,7 +25,8 @@ interface SourcesState {
   addUrl: (input: { name: string; url: string; intervalMin?: number }) => string
   remove: (id: string) => void
   toggle: (id: string) => void
-  setStatus: (id: string, patch: Partial<Source>) => void
+  /** Mutate only runtime status fields. Use `update` for user-editable config. */
+  setStatus: (id: string, patch: Partial<Pick<Source, 'status' | 'lastFetched' | 'lastError'>>) => void
   update: (id: string, patch: Partial<Omit<Source, 'id' | 'type'>>) => void
 }
 

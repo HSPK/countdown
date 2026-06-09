@@ -4,6 +4,7 @@ import { useTodos, selectAllTags, selectCompleted } from '../store/todos'
 import { useSources } from '../store/sources'
 import { TodoRow } from './TodoRow'
 import { EditModal } from './EditModal'
+import { ListSection } from './ListSection'
 import { useNow } from '../hooks/useNow'
 import { useT } from '../lib/i18n'
 import { bucketOf, type Bucket } from '../lib/time'
@@ -169,14 +170,12 @@ export function AllTab() {
           order
             .filter((b) => grouped[b].length > 0)
             .map((b) => (
-              <section className="list__section" key={b}>
-                <header className="list__head">
-                  <h2 className="list__head-title">
-                    {t(BUCKET_KEYS[b])}
-                    {b === 'later' && <span className="list__head-range"> · {t('bucket.range', { days: pages * PAGE_DAYS })}</span>}
-                  </h2>
-                  <span className="list__head-count">{grouped[b].length}</span>
-                </header>
+              <ListSection
+                key={b}
+                title={t(BUCKET_KEYS[b])}
+                subtitle={b === 'later' ? ` · ${t('bucket.range', { days: pages * PAGE_DAYS })}` : undefined}
+                count={grouped[b].length}
+              >
                 {grouped[b].map((o) => (
                   <TodoRow
                     key={o.id}
@@ -186,7 +185,7 @@ export function AllTab() {
                     occurrenceDeadline={o.isVirtual ? o.deadline : undefined}
                   />
                 ))}
-              </section>
+              </ListSection>
             ))
         )}
 
@@ -198,37 +197,39 @@ export function AllTab() {
         )}
 
         {completed.length > 0 && (
-          <section className="list__section">
-            <header className="list__head">
-              <h2 className="list__head-title">{t('bucket.done')}</h2>
-              <span className="list__head-count">{completed.length}</span>
-              <span className="list__spacer" />
-              <button className="list__head-btn" onClick={() => setShowDone((v) => !v)}>
-                <IconChevronDown
-                  width={12} height={12}
-                  style={{
-                    verticalAlign: 'middle', marginRight: 4,
-                    transform: showDone ? 'rotate(180deg)' : 'none',
-                    transition: 'transform 200ms',
-                  }}
-                />
-                {showDone ? t('list.hide') : t('list.show')}
-              </button>
-              {showDone && (
+          <ListSection
+            title={t('bucket.done')}
+            count={completed.length}
+            right={
+              <>
                 <button
                   className="list__head-btn"
-                  onClick={() => {
-                    if (confirm(t('list.clear.confirm', { count: completed.length }))) clearCompleted()
-                  }}
+                  data-open={showDone}
+                  onClick={() => setShowDone((v) => !v)}
                 >
-                  {t('list.clear')}
+                  <IconChevronDown
+                    width={12} height={12}
+                    className="list__head-btn-chev"
+                  />
+                  {showDone ? t('list.hide') : t('list.show')}
                 </button>
-              )}
-            </header>
+                {showDone && (
+                  <button
+                    className="list__head-btn"
+                    onClick={() => {
+                      if (confirm(t('list.clear.confirm', { count: completed.length }))) clearCompleted()
+                    }}
+                  >
+                    {t('list.clear')}
+                  </button>
+                )}
+              </>
+            }
+          >
             {showDone && completed.map((t_) => (
               <TodoRow key={t_.id} todo={t_} onEdit={setEditing} showSource />
             ))}
-          </section>
+          </ListSection>
         )}
       </div>
 

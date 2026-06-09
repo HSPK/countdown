@@ -6,20 +6,19 @@ import { Composer } from './components/Composer'
 import { TabBar } from './components/TabBar'
 import { FocusView } from './components/FocusView'
 import { HelpPage } from './components/HelpPage'
-import { CyberpunkBg } from './components/CyberpunkBg'
-import { PaperBg } from './components/PaperBg'
-import { useSettings, type TabId } from './store/settings'
-import { useSources } from './store/sources'
+import { THEME_BG } from './themeBackgrounds'
+import { useSettings, THEMES, type TabId } from './store/settings'
 import { useCustomThemes, applyCustomTokens } from './store/customThemes'
+import { useNotifierPrefs } from './store/notifierPrefs'
 import { useTodos, selectNext } from './store/todos'
 import { useHotkey } from './hooks/useHotkey'
 import { useSwipe } from './hooks/useSwipe'
 import { useNotifier } from './hooks/useNotifier'
 import { seedIfEmpty } from './lib/seed'
-import { fetchSubscription } from './lib/portable'
+import { refreshAllEnabledOnce } from './lib/subscriptions'
 
 const ORDER: TabId[] = ['home', 'all', 'settings']
-const BUILTIN_THEMES = ['mono-light', 'mono-dark', 'paper', 'cyberpunk', 'flip']
+const BUILTIN_THEME_IDS = new Set(THEMES.map((t) => t.id))
 
 export default function App() {
   const theme = useSettings((s) => s.theme)
@@ -30,7 +29,7 @@ export default function App() {
   const cycleTheme = useSettings((s) => s.cycleTheme)
   const next = useTodos(selectNext)
   const customThemes = useCustomThemes((s) => s.themes)
-  const notifierEnabled = useCustomThemes((s) => s.notifier.enabled)
+  const notifierEnabled = useNotifierPrefs((s) => s.enabled)
 
   const composerRef = useRef<HTMLInputElement | null>(null)
   const mainRef = useRef<HTMLElement | null>(null)
@@ -58,36 +57,14 @@ export default function App() {
       document.documentElement.setAttribute('data-theme', custom.base ?? 'mono-light')
       return applyCustomTokens(custom.tokens)
     }
-    if (BUILTIN_THEMES.includes(theme)) {
-      document.documentElement.setAttribute('data-theme', theme)
-    } else {
-      document.documentElement.setAttribute('data-theme', 'mono-light')
-    }
+    document.documentElement.setAttribute(
+      'data-theme',
+      BUILTIN_THEME_IDS.has(theme) ? theme : 'mono-light',
+    )
   }, [theme, customThemes])
 
   /* Refresh enabled URL sources on app boot */
-  useEffect(() => {
-    const ran = sessionStorage.getItem('countdown.sources.refreshed')
-    if (ran) return
-    sessionStorage.setItem('countdown.sources.refreshed', '1')
-
-    const { sources } = useSources.getState()
-    for (const s of sources) {
-      if (s.type !== 'url' || !s.enabled || !s.url) continue
-      useSources.getState().setStatus(s.id, { status: 'fetching' })
-      fetchSubscription(s.url, s.id)
-        .then((items) => {
-          useTodos.getState().replaceSource(s.id, items)
-          useSources.getState().setStatus(s.id, { status: 'ok', lastFetched: Date.now() })
-        })
-        .catch((e: unknown) => {
-          useSources.getState().setStatus(s.id, {
-            status: 'error',
-            lastError: e instanceof Error ? e.message : String(e),
-          })
-        })
-    }
-  }, [])
+  useEffect(() => { refreshAllEnabledOnce() }, [])
 
   /* Desktop notifications — only when user has explicitly enabled in Settings */
   useNotifier(notifierEnabled)
@@ -118,10 +95,10 @@ export default function App() {
   useHotkey('ArrowLeft',  () => { if (useSettings.getState().helpSection === null) switchTab(-1) })
   useHotkey('ArrowRight', () => { if (useSettings.getState().helpSection === null) switchTab(+1) })
 
+  const Bg = THEME_BG[theme]
   return (
     <div className="app">
-      {theme === 'cyberpunk' && <CyberpunkBg />}
-      {theme === 'paper' && <PaperBg />}
+      {Bg && <Bg />}
 
       {/* The ref'd <main> stays mounted across tab changes so swipe
           listeners persist and iOS doesn't lose the tap after a swipe.

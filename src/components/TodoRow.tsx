@@ -1,4 +1,3 @@
-import { useEffect, useRef, useState } from 'react'
 import type { Todo } from '../store/todos'
 import { useTodos } from '../store/todos'
 import { useSettings } from '../store/settings'
@@ -6,6 +5,7 @@ import { useSources } from '../store/sources'
 import { useNow } from '../hooks/useNow'
 import { useT } from '../lib/i18n'
 import { formatHM, formatRowTime, urgencyOf } from '../lib/time'
+import { RowMenu, type RowMenuItem } from './RowMenu'
 import {
   IconCheck,
   IconEdit,
@@ -13,7 +13,6 @@ import {
   IconTrash,
   IconStar,
   IconRepeat,
-  IconMoreHorizontal,
 } from './Icons'
 
 const RECURRENCE_LABEL_KEYS: Record<string, string> = {
@@ -48,31 +47,44 @@ export function TodoRow({ todo, onEdit, showSource, occurrenceDeadline }: Props)
   const u = todo.completedAt ? 'far' : urgencyOf(remaining)
   const overdue = remaining <= 0 && !todo.completedAt
 
-  const [menuOpen, setMenuOpen] = useState(false)
-  const menuRef = useRef<HTMLDivElement | null>(null)
-
-  useEffect(() => {
-    if (!menuOpen) return
-    const onDown = (e: MouseEvent | TouchEvent) => {
-      if (!menuRef.current?.contains(e.target as Node)) setMenuOpen(false)
-    }
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setMenuOpen(false) }
-    document.addEventListener('mousedown', onDown)
-    document.addEventListener('touchstart', onDown, { passive: true })
-    document.addEventListener('keydown', onKey)
-    return () => {
-      document.removeEventListener('mousedown', onDown)
-      document.removeEventListener('touchstart', onDown)
-      document.removeEventListener('keydown', onKey)
-    }
-  }, [menuOpen])
-
   const onCheck = () => {
-    if (isVirtual) {
-      completeOccurrence(todo.id, effectiveDeadline)
-    } else {
-      toggleComplete(todo.id)
-    }
+    if (isVirtual) completeOccurrence(todo.id, effectiveDeadline)
+    else toggleComplete(todo.id)
+  }
+
+  const menuItems: RowMenuItem[] = []
+  if (!isVirtual) {
+    menuItems.push({
+      icon: todo.pinned ? <IconStarFill width={14} height={14} /> : <IconStar width={14} height={14} />,
+      label: todo.pinned ? t('row.unpin') : t('row.pin'),
+      onSelect: () => togglePin(todo.id),
+    })
+  }
+  menuItems.push({
+    icon: <IconEdit width={14} height={14} />,
+    label: isVirtual ? t('row.edit.parent') : t('row.edit'),
+    onSelect: () => onEdit(todo),
+  })
+  if (!isVirtual) {
+    menuItems.push({
+      icon: <IconTrash width={14} height={14} />,
+      label: t('row.delete'),
+      destructive: true,
+      onSelect: () => {
+        if (confirm(t('row.delete.confirm', { title: todo.title }))) removeTodo(todo.id)
+      },
+    })
+  }
+
+  const onRowClick = (e: React.MouseEvent) => {
+    if ((e.target as HTMLElement).closest('button')) return
+    if (todo.completedAt) return
+    if (isVirtual) { onEdit(todo); return }
+    setFocus(todo.id)
+  }
+  const onRowKey = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !todo.completedAt && !isVirtual) setFocus(todo.id)
+    if (e.key === ' ') { e.preventDefault(); onCheck() }
   }
 
   return (
@@ -82,16 +94,8 @@ export function TodoRow({ todo, onEdit, showSource, occurrenceDeadline }: Props)
       data-virtual={isVirtual}
       tabIndex={0}
       role="button"
-      onClick={(e) => {
-        if ((e.target as HTMLElement).closest('button')) return
-        if (todo.completedAt) return
-        if (isVirtual) { onEdit(todo); return }
-        setFocus(todo.id)
-      }}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' && !todo.completedAt && !isVirtual) setFocus(todo.id)
-        if (e.key === ' ') { e.preventDefault(); onCheck() }
-      }}
+      onClick={onRowClick}
+      onKeyDown={onRowKey}
     >
       <div
         className={
@@ -112,7 +116,11 @@ export function TodoRow({ todo, onEdit, showSource, occurrenceDeadline }: Props)
             </span>
           )}
           {todo.recurrence && todo.recurrence !== 'none' && (
-            <span className="row__title-icon" aria-label={t('row.recurring')} title={`${t('row.recurring')} · ${t(RECURRENCE_LABEL_KEYS[todo.recurrence] ?? '')}`}>
+            <span
+              className="row__title-icon"
+              aria-label={t('row.recurring')}
+              title={`${t('row.recurring')} · ${t(RECURRENCE_LABEL_KEYS[todo.recurrence] ?? '')}`}
+            >
               <IconRepeat width={12} height={12} />
             </span>
           )}
@@ -131,7 +139,7 @@ export function TodoRow({ todo, onEdit, showSource, occurrenceDeadline }: Props)
               <span className="row__sub-sep" aria-hidden>·</span>
               <span className="row__sub-tags">
                 {todo.tags.slice(0, 3).map((tag) => <span key={tag} className="tag">#{tag}</span>)}
-                {todo.tags.length > 3 && <span className="tag" style={{ opacity: 0.7 }}>+{todo.tags.length - 3}</span>}
+                {todo.tags.length > 3 && <span className="tag row__sub-tags-more">+{todo.tags.length - 3}</span>}
               </span>
             </>
           )}
@@ -155,57 +163,7 @@ export function TodoRow({ todo, onEdit, showSource, occurrenceDeadline }: Props)
             <IconCheck />
           </button>
         )}
-        {!isExternal && (
-          <div className="row-menu-wrap" ref={menuRef}>
-            <button
-              className="row__action"
-              aria-label={t('row.more')}
-              title={t('row.more')}
-              aria-haspopup="menu"
-              aria-expanded={menuOpen}
-              onClick={() => setMenuOpen((v) => !v)}
-            >
-              <IconMoreHorizontal />
-            </button>
-            {menuOpen && (
-              <div className="row-menu" role="menu">
-                {!isVirtual && (
-                  <button
-                    className="row-menu__item"
-                    role="menuitem"
-                    onClick={() => { togglePin(todo.id); setMenuOpen(false) }}
-                  >
-                    <span className="row-menu__icon">
-                      {todo.pinned ? <IconStarFill width={14} height={14} /> : <IconStar width={14} height={14} />}
-                    </span>
-                    <span>{todo.pinned ? t('row.unpin') : t('row.pin')}</span>
-                  </button>
-                )}
-                <button
-                  className="row-menu__item"
-                  role="menuitem"
-                  onClick={() => { onEdit(todo); setMenuOpen(false) }}
-                >
-                  <span className="row-menu__icon"><IconEdit width={14} height={14} /></span>
-                  <span>{isVirtual ? t('row.edit.parent') : t('row.edit')}</span>
-                </button>
-                {!isVirtual && (
-                  <button
-                    className="row-menu__item row-menu__item--danger"
-                    role="menuitem"
-                    onClick={() => {
-                      setMenuOpen(false)
-                      if (confirm(t('row.delete.confirm', { title: todo.title }))) removeTodo(todo.id)
-                    }}
-                  >
-                    <span className="row-menu__icon"><IconTrash width={14} height={14} /></span>
-                    <span>{t('row.delete')}</span>
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
-        )}
+        {!isExternal && <RowMenu items={menuItems} label={t('row.more')} />}
       </div>
     </div>
   )

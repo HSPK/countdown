@@ -3,24 +3,26 @@ import { createPortal } from 'react-dom'
 import type { Todo } from '../store/todos'
 import { useTodos, type Recurrence } from '../store/todos'
 import { WheelPicker } from './WheelPicker'
-import { Markdown } from './Markdown'
+import { Collapsible } from './Collapsible'
+import { MarkdownEditor } from './MarkdownEditor'
+import { RecurrenceField } from './RecurrenceField'
 import { formatAbsolute } from '../lib/time'
-import { parseCron } from '../lib/recurrence'
+import { validateTodoEdit } from '../lib/editValidation'
 import { useT } from '../lib/i18n'
-import { IconX, IconChevronDown } from './Icons'
+import { useEscToClose } from '../hooks/useEscToClose'
+import { useSaveShortcut } from '../hooks/useSaveShortcut'
+import { IconX } from './Icons'
 
 interface Props {
   todo: Todo | null
   onClose: () => void
 }
 
-const RECURRENCE_OPTS: Array<{ value: Recurrence; labelKey: string }> = [
-  { value: 'none',    labelKey: 'recurrence.none' },
-  { value: 'daily',   labelKey: 'recurrence.daily' },
-  { value: 'weekly',  labelKey: 'recurrence.weekly' },
-  { value: 'monthly', labelKey: 'recurrence.monthly' },
-  { value: 'custom',  labelKey: 'recurrence.custom' },
-]
+function parseTagsText(text: string): string[] {
+  return Array.from(new Set(
+    text.split(/[\s,，]+/).map((tag) => tag.replace(/^#/, '').trim()).filter(Boolean),
+  ))
+}
 
 export function EditModal({ todo, onClose }: Props) {
   const updateTodo = useTodos((s) => s.updateTodo)
@@ -34,48 +36,25 @@ export function EditModal({ todo, onClose }: Props) {
   const [cronExpr, setCronExpr] = useState('')
   const [showDeadlinePicker, setShowDeadlinePicker] = useState(false)
   const [showCreatedAt, setShowCreatedAt] = useState(false)
-  const [previewMode, setPreviewMode] = useState(false)
-
-  useEffect(() => {
-    if (todo) {
-      setTitle(todo.title)
-      setDeadline(todo.deadline)
-      setCreatedAt(todo.createdAt)
-      setNotes(todo.notes ?? '')
-      setTagsText(todo.tags.map((t) => `#${t}`).join(' '))
-      setRecurrence(todo.recurrence ?? 'none')
-      setCronExpr(todo.cronExpr ?? '')
-      setShowDeadlinePicker(false)
-      setShowCreatedAt(false)
-      setPreviewMode(false)
-    }
-  }, [todo])
 
   useEffect(() => {
     if (!todo) return
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
-      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
-        e.preventDefault()
-        save()
-      }
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [todo, onClose, title, deadline, createdAt, notes, tagsText, recurrence])
+    setTitle(todo.title)
+    setDeadline(todo.deadline)
+    setCreatedAt(todo.createdAt)
+    setNotes(todo.notes ?? '')
+    setTagsText(todo.tags.map((tag) => `#${tag}`).join(' '))
+    setRecurrence(todo.recurrence ?? 'none')
+    setCronExpr(todo.cronExpr ?? '')
+    setShowDeadlinePicker(false)
+    setShowCreatedAt(false)
+  }, [todo])
 
-  if (!todo) return null
-
-  const tags = Array.from(new Set(
-    tagsText.split(/[\s,，]+/).map((tag) => tag.replace(/^#/, '').trim()).filter(Boolean),
-  ))
-
-  const cronValid = recurrence !== 'custom' || (cronExpr.trim() !== '' && parseCron(cronExpr.trim()) !== null)
+  const tags = parseTagsText(tagsText)
+  const validation = validateTodoEdit({ title, deadline, recurrence, cronExpr })
 
   const save = () => {
-    if (!title.trim() || !Number.isFinite(deadline)) return
-    if (!cronValid) return
+    if (!todo || !validation.ok) return
     updateTodo(todo.id, {
       title: title.trim(),
       deadline,
@@ -87,6 +66,12 @@ export function EditModal({ todo, onClose }: Props) {
     })
     onClose()
   }
+
+  const open = !!todo
+  useEscToClose(onClose, open)
+  useSaveShortcut(save, open)
+
+  if (!todo) return null
 
   return createPortal(
     <div
@@ -105,7 +90,6 @@ export function EditModal({ todo, onClose }: Props) {
 
         <div className="modal__body">
 
-          {/* Title — most prominent */}
           <input
             className="edit__title"
             value={title}
@@ -113,7 +97,6 @@ export function EditModal({ todo, onClose }: Props) {
             onChange={(e) => setTitle(e.target.value)}
           />
 
-          {/* Tags + Repeat — side by side on desktop */}
           <div className="edit__grid edit__grid--2">
             <div className="edit__field">
               <label className="edit__label">{t('edit.tags')}</label>
@@ -130,125 +113,40 @@ export function EditModal({ todo, onClose }: Props) {
               )}
             </div>
 
-            <div className="edit__field">
-              <label className="edit__label">{t('edit.repeat')}</label>
-              <div className="edit__segmented">
-                {RECURRENCE_OPTS.map((opt) => (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    className="edit__seg-btn"
-                    aria-pressed={recurrence === opt.value}
-                    onClick={() => setRecurrence(opt.value)}
-                  >
-                    {t(opt.labelKey)}
-                  </button>
-                ))}
-              </div>
-              {recurrence === 'custom' && (
-                <div className="edit__cron">
-                  <input
-                    className={'edit__input edit__cron-input' + (cronValid ? '' : ' edit__cron-input--invalid')}
-                    value={cronExpr}
-                    onChange={(e) => setCronExpr(e.target.value)}
-                    placeholder="0 9 * * 1-5"
-                    aria-label="cron expression"
-                    spellCheck={false}
-                  />
-                  <p
-                    className="edit__cron-hint"
-                    dangerouslySetInnerHTML={{ __html: t('edit.cron.hint') }}
-                  />
-                  {!cronValid && cronExpr.trim() !== '' && (
-                    <p className="edit__cron-error">{t('edit.cron.invalid')}</p>
-                  )}
-                </div>
-              )}
-            </div>
+            <RecurrenceField
+              recurrence={recurrence}
+              cronExpr={cronExpr}
+              onRecurrenceChange={setRecurrence}
+              onCronChange={setCronExpr}
+            />
           </div>
 
-          {/* Deadline (collapsible, default closed) */}
-          <div className="edit__field">
-            <button
-              type="button"
-              className="edit__collapsible"
-              aria-expanded={showDeadlinePicker}
-              onClick={() => setShowDeadlinePicker((v) => !v)}
+          <div className="hig-group">
+            <Collapsible
+              label={t('edit.deadline')}
+              value={formatAbsolute(deadline)}
+              open={showDeadlinePicker}
+              onToggle={() => setShowDeadlinePicker((v) => !v)}
             >
-              <span className="edit__collapsible-label">{t('edit.deadline')}</span>
-              <span className="edit__collapsible-value">{formatAbsolute(deadline)}</span>
-              <IconChevronDown
-                width={14} height={14}
-                style={{
-                  transform: showDeadlinePicker ? 'rotate(180deg)' : 'none',
-                  transition: 'transform 200ms',
-                  color: 'var(--fg-muted)',
-                }}
-              />
-            </button>
-            {showDeadlinePicker && (
-              <div className="edit__picker-wrap">
-                <WheelPicker value={deadline} onChange={setDeadline} />
-              </div>
-            )}
-          </div>
-
-          {/* Created (collapsible) */}
-          <div className="edit__field">
-            <button
-              type="button"
-              className="edit__collapsible"
-              aria-expanded={showCreatedAt}
-              onClick={() => setShowCreatedAt((v) => !v)}
+              <WheelPicker value={deadline} onChange={setDeadline} />
+            </Collapsible>
+            <Collapsible
+              label={t('edit.created')}
+              value={formatAbsolute(createdAt)}
+              open={showCreatedAt}
+              onToggle={() => setShowCreatedAt((v) => !v)}
             >
-              <span className="edit__collapsible-label">{t('edit.created')}</span>
-              <span className="edit__collapsible-value">{formatAbsolute(createdAt)}</span>
-              <IconChevronDown
-                width={14} height={14}
-                style={{
-                  transform: showCreatedAt ? 'rotate(180deg)' : 'none',
-                  transition: 'transform 200ms',
-                  color: 'var(--fg-muted)',
-                }}
-              />
-            </button>
-            {showCreatedAt && (
-              <div className="edit__picker-wrap">
-                <WheelPicker value={createdAt} onChange={setCreatedAt} />
-              </div>
-            )}
+              <WheelPicker value={createdAt} onChange={setCreatedAt} />
+            </Collapsible>
           </div>
 
-          {/* Notes — Markdown editor that toggles between edit and preview */}
-          <div className="edit__field">
-            <div className="edit__notes-head">
-              <label className="edit__label">{t('edit.notes')}</label>
-              <button
-                type="button"
-                className="edit__notes-toggle"
-                aria-pressed={previewMode}
-                onClick={() => setPreviewMode((v) => !v)}
-                title={previewMode ? t('edit.notes.editor') : t('edit.notes.preview')}
-              >
-                {previewMode ? t('edit.notes.editor') : t('edit.notes.preview')}
-              </button>
-            </div>
-            {previewMode ? (
-              <div className="edit__notes-preview">
-                {notes.trim()
-                  ? <Markdown source={notes} />
-                  : <div className="edit__notes-preview-empty">{t('edit.notes.empty')}</div>}
-              </div>
-            ) : (
-              <textarea
-                className="edit__textarea"
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                rows={6}
-                placeholder={t('edit.notes.placeholder')}
-              />
-            )}
-          </div>
+          <MarkdownEditor
+            label={t('edit.notes')}
+            value={notes}
+            onChange={setNotes}
+            placeholder={t('edit.notes.placeholder')}
+            emptyLabel={t('edit.notes.empty')}
+          />
 
         </div>
 
@@ -256,7 +154,9 @@ export function EditModal({ todo, onClose }: Props) {
           <span className="modal__hint">{t('edit.save.hint')}</span>
           <div className="modal__footer-actions">
             <button className="btn" onClick={onClose}>{t('edit.cancel')}</button>
-            <button className="btn btn--primary" onClick={save} disabled={!title.trim() || !cronValid}>{t('edit.save')}</button>
+            <button className="btn btn--primary" onClick={save} disabled={!validation.ok}>
+              {t('edit.save')}
+            </button>
           </div>
         </footer>
       </div>

@@ -17,7 +17,7 @@ import {
 import { triggerSubmitFeedback } from '../lib/feedback'
 import { useT } from '../lib/i18n'
 import { formatHM, pad } from '../lib/time'
-import { WheelPicker } from './WheelPicker'
+import { DateTimePicker } from './DateTimePicker'
 import { RelativeDurationPicker } from './RelativeDurationPicker'
 import { IconPlus, IconX, IconChevronDown, IconArrowUp, IconCalendar } from './Icons'
 
@@ -305,7 +305,7 @@ export function Composer({ inputRef }: Props) {
                   onChange={(offsetMs) => setChoice({ kind: 'custom-rel', offsetMs })}
                 />
               ) : (
-                <WheelPicker
+                <DateTimePicker
                   value={choice.kind === 'custom' ? choice.ts : Date.now()}
                   onChange={(ts) => setChoice({ kind: 'custom', ts })}
                 />

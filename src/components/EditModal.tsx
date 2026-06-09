@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import type { Todo } from '../store/todos'
 import { useTodos, type Recurrence } from '../store/todos'
 import type { ReminderConfig } from '../lib/reminders'
-import { WheelPicker } from './WheelPicker'
+import { DateTimePicker } from './DateTimePicker'
 import { Collapsible } from './Collapsible'
 import { MarkdownEditor } from './MarkdownEditor'
 import { RecurrenceField } from './RecurrenceField'
@@ -128,29 +128,27 @@ export function EditModal({ todo, onClose }: Props) {
                 onChange={(e) => setTitle(e.target.value)}
               />
 
-              <div className="edit__grid edit__grid--2">
-                <div className="edit__field">
-                  <label className="edit__label">{t('edit.tags')}</label>
-                  <input
-                    className="edit__input"
-                    value={tagsText}
-                    onChange={(e) => setTagsText(e.target.value)}
-                    placeholder={t('edit.tags.hint')}
-                  />
-                  {tags.length > 0 && (
-                    <div className="edit__tags-preview">
-                      {tags.map((tag) => <span key={tag} className="tag">#{tag}</span>)}
-                    </div>
-                  )}
-                </div>
-
-                <RecurrenceField
-                  recurrence={recurrence}
-                  cronExpr={cronExpr}
-                  onRecurrenceChange={setRecurrence}
-                  onCronChange={setCronExpr}
+              <div className="edit__field">
+                <label className="edit__label">{t('edit.tags')}</label>
+                <input
+                  className="edit__input"
+                  value={tagsText}
+                  onChange={(e) => setTagsText(e.target.value)}
+                  placeholder={t('edit.tags.hint')}
                 />
+                {tags.length > 0 && (
+                  <div className="edit__tags-preview">
+                    {tags.map((tag) => <span key={tag} className="tag">#{tag}</span>)}
+                  </div>
+                )}
               </div>
+
+              <RecurrenceField
+                recurrence={recurrence}
+                cronExpr={cronExpr}
+                onRecurrenceChange={setRecurrence}
+                onCronChange={setCronExpr}
+              />
 
               <div className="hig-group">
                 <Collapsible
@@ -159,7 +157,7 @@ export function EditModal({ todo, onClose }: Props) {
                   open={showDeadlinePicker}
                   onToggle={() => setShowDeadlinePicker((v) => !v)}
                 >
-                  <WheelPicker value={deadline} onChange={setDeadline} />
+                  <DateTimePicker value={deadline} onChange={setDeadline} />
                 </Collapsible>
                 <Collapsible
                   label={t('edit.created')}
@@ -167,7 +165,7 @@ export function EditModal({ todo, onClose }: Props) {
                   open={showCreatedAt}
                   onToggle={() => setShowCreatedAt((v) => !v)}
                 >
-                  <WheelPicker value={createdAt} onChange={setCreatedAt} />
+                  <DateTimePicker value={createdAt} onChange={setCreatedAt} />
                 </Collapsible>
               </div>
 

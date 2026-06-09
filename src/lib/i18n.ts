@@ -76,7 +76,8 @@ const EN: Dict = {
   'composer.custom':            'Custom',
   'composer.custom.close':      'Close picker',
   'composer.custom.rel':        'Duration',
-  'composer.custom.abs':        'Date',
+  'composer.custom.abs':        'Date & time',
+  'composer.custom.pick':       'Pick…',
   'composer.time':              'Time',
   'composer.tag.remove':        'Remove #{tag}',
 
@@ -357,7 +358,8 @@ const ZH: Dict = {
   'composer.custom':            '自定义',
   'composer.custom.close':      '收起',
   'composer.custom.rel':        '时长',
-  'composer.custom.abs':        '日期',
+  'composer.custom.abs':        '日期时间',
+  'composer.custom.pick':       '选择…',
   'composer.time':              '时间',
   'composer.tag.remove':        '移除 #{tag}',
 

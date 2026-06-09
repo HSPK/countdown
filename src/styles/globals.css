@@ -2918,40 +2918,89 @@ kbd {
    ───────────────────────────────────────────── */
 .fab {
   position: fixed;
-  right: max(env(safe-area-inset-right, 0px), var(--space-5));
-  /* Sit clearly above the tabbar with a generous gap so it never reads
-     as part of the dock. Tabbar height ~64 + dock bottom-inset + gap. */
+  right: max(env(safe-area-inset-right, 0px), var(--space-6));
   bottom: calc(
     max(env(safe-area-inset-bottom, 0px), clamp(14px, 2.5vh, 24px))
     + 72px
-    + var(--space-5)
+    + var(--space-6)
   );
   z-index: 60;
   width: 52px; height: 52px;
   border-radius: 50%;
   display: inline-flex;
   align-items: center; justify-content: center;
-  background: var(--accent);
-  color: var(--on-accent);
-  border: none;
-  box-shadow: var(--elev-fab);
+  background: var(--bg-popover);
+  color: var(--accent);
+  border: 1px solid var(--hairline);
+  box-shadow: var(--elev-2), 0 0 0 4px color-mix(in srgb, var(--accent) 8%, transparent);
   cursor: pointer;
-  transition: transform var(--dur-fast) var(--ease), filter var(--dur-fast);
+  transition: transform var(--dur-fast) var(--ease), background var(--dur-fast), box-shadow var(--dur-fast);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
 }
-[data-theme="cyberpunk"] .fab { border-radius: 12px; }
-.fab:hover { transform: translateY(-2px); filter: brightness(1.08); }
+[data-theme="cyberpunk"] .fab {
+  border-radius: 12px;
+  box-shadow: var(--elev-2), 0 0 0 4px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+.fab:hover {
+  background: var(--bg-2);
+  transform: translateY(-2px);
+  box-shadow: var(--elev-2), 0 0 0 6px color-mix(in srgb, var(--accent) 14%, transparent);
+}
 .fab:active { transform: translateY(0) scale(0.94); }
-.fab:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 40%, transparent); outline-offset: 3px; }
+.fab:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 .fab svg { width: 20px; height: 20px; }
 
 @media (max-width: 540px) {
-  .fab { width: 56px; height: 56px; }
+  .fab {
+    right: max(env(safe-area-inset-right, 0px), var(--space-5));
+    bottom: calc(
+      max(env(safe-area-inset-bottom, 0px), 10px)
+      + 64px
+      + var(--space-4)
+    );
+    width: 52px; height: 52px;
+  }
 }
 
 /* ─────────────────────────────────────────────
    ComposerSheet — modal layout for the new-task form
    ───────────────────────────────────────────── */
-.modal--compose { width: min(440px, 100%); }
+.modal--compose {
+  width: min(440px, 100%);
+  max-height: 100%;
+  max-height: calc(100dvh
+    - max(env(safe-area-inset-top, 0px), 20px)
+    - max(env(safe-area-inset-bottom, 0px), 20px));
+  min-height: 0;
+  padding: 0;
+  gap: 0;
+  border-radius: var(--radius-card);
+  overflow: hidden;
+}
+.modal--compose .modal__body {
+  padding-top: var(--space-3);
+}
+.modal--sheet {
+  max-height: 100%;
+  max-height: calc(100dvh
+    - max(env(safe-area-inset-top, 0px), 20px)
+    - max(env(safe-area-inset-bottom, 0px), 20px));
+  min-height: 0;
+  padding: 0;
+  gap: 0;
+  border-radius: var(--radius-card);
+  overflow: hidden;
+}
+.modal__body--no-pad { padding: 0; }
+.hig-row--active { background: color-mix(in srgb, var(--accent) 6%, transparent); }
+.hig-row--active .hig-row__title { color: var(--accent); }
+.compose-sheet__inline {
+  padding: var(--space-2) var(--space-3) var(--space-4);
+  background: var(--bg);
+  border-bottom: 1px solid var(--hairline);
+}
+.compose-sheet__custom-rows { margin-top: var(--space-2); }
 .compose-sheet__when {
   display: flex; flex-direction: column;
   gap: 10px;

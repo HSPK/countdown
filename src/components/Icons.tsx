@@ -48,6 +48,12 @@ export const IconBell = (p: P) => (
     <path d="M13.7 21a2 2 0 0 1-3.4 0" />
   </svg>
 )
+export const IconClock = (p: P) => (
+  <svg {...base} {...p}>
+    <circle cx="12" cy="12" r="9" />
+    <path d="M12 7v5l3 2" />
+  </svg>
+)
 export const IconDownload = (p: P) => (
   <svg {...base} {...p}>
     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />

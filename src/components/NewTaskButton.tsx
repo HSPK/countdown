@@ -18,7 +18,7 @@ export function NewTaskButton({ onPress }: Props) {
       aria-label={t('composer.add')}
       title={t('composer.add.hint')}
     >
-      <IconPlus width={18} height={18} />
+      <IconPlus width={20} height={20} />
     </button>
   )
 }

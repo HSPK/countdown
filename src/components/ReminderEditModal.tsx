@@ -6,8 +6,9 @@ import { SOUND_IDS, playSound, type SoundId } from '../lib/soundEngine'
 import type { ReminderConfig } from '../lib/reminders'
 import { useEscToClose } from '../hooks/useEscToClose'
 import { useSaveShortcut } from '../hooks/useSaveShortcut'
-import { HigSwitch } from './HigList'
-import { IconX } from './Icons'
+import { HigGroup, HigRow, HigRowToggle } from './HigList'
+import { Stepper } from './Stepper'
+import { IconBell, IconClock, IconX } from './Icons'
 
 const UNIT_MS: Record<RelativeUnit, number> = {
   sec: 1_000,
@@ -17,8 +18,6 @@ const UNIT_MS: Record<RelativeUnit, number> = {
   week: 604_800_000,
 }
 
-/* Convert an arbitrary offset into the largest tidy unit so the form
-   starts on something readable (e.g. 3600000 → "1 hour" not "60 minutes"). */
 function splitOffset(ms: number): { amount: number; unit: RelativeUnit } {
   if (ms <= 0) return { amount: 0, unit: 'min' }
   const order: RelativeUnit[] = ['week', 'day', 'hour', 'min', 'sec']
@@ -34,6 +33,10 @@ function unitLabel(t: ReturnType<typeof useT>, u: RelativeUnit): string {
 }
 function soundLabel(t: ReturnType<typeof useT>, id: SoundId): string {
   return t(`sound.${id}`)
+}
+
+const UNIT_MAX: Record<RelativeUnit, number> = {
+  sec: 59, min: 59, hour: 23, day: 30, week: 12,
 }
 
 interface Props {
@@ -52,7 +55,6 @@ export function ReminderEditModal({ value, isNew, onSave, onClose }: Props) {
   const [enabled, setEnabled] = useState<boolean>(value.enabled)
 
   const offsetMs = Math.max(0, Math.floor(amount)) * UNIT_MS[unit]
-  const isDue = amount === 0
 
   const save = () => {
     onSave({ ...value, offsetMs, soundId, enabled })
@@ -81,60 +83,71 @@ export function ReminderEditModal({ value, isNew, onSave, onClose }: Props) {
         </header>
 
         <div className="modal__body">
-          <div className="edit__field">
-            <label className="edit__label">{t('reminder.enabled')}</label>
-            <HigSwitch checked={enabled} onChange={setEnabled} label={t('reminder.enabled')} />
-          </div>
 
-          <div className="edit__field">
-            <label className="edit__label">{t('reminder.offset')}</label>
-            <div className="chip-time-row">
-              <input
-                className="edit__input edit__input--narrow"
-                type="number"
-                min={0}
-                step={1}
-                value={amount}
-                onChange={(e) => setAmount(Math.max(0, Math.floor(Number(e.target.value) || 0)))}
-              />
-              <div className="edit__segmented edit__segmented--wrap">
-                {RELATIVE_UNITS.map((u) => (
-                  <button
-                    key={u}
-                    type="button"
-                    className="edit__seg-btn"
-                    aria-pressed={unit === u}
-                    onClick={() => setUnit(u)}
-                    disabled={isDue}
-                  >
-                    {unitLabel(t, u)}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <p className="edit__cron-hint">
-              {isDue ? t('reminder.at.deadline') : t('reminder.before.deadline')}
-            </p>
-          </div>
+          {/* Group 1: enable + offset */}
+          <HigGroup>
+            <HigRowToggle
+              icon={<IconBell width={14} height={14} />}
+              title={t('reminder.enabled')}
+              checked={enabled}
+              onChange={setEnabled}
+            />
+            <HigRow
+              icon={<IconClock width={14} height={14} />}
+              title={t('reminder.offset')}
+              subtitle={amount === 0 ? t('reminder.at.deadline') : t('reminder.before.deadline')}
+              trailing={
+                <div className="reminder-offset" onClick={(e) => e.stopPropagation()}>
+                  <Stepper
+                    value={amount}
+                    max={UNIT_MAX[unit]}
+                    onChange={setAmount}
+                    ariaLabel={t('reminder.offset')}
+                    pad={false}
+                  />
+                  <div className="reminder-unit" role="radiogroup" aria-label={t('chips.unit')}>
+                    {RELATIVE_UNITS.map((u) => (
+                      <button
+                        key={u}
+                        type="button"
+                        role="radio"
+                        aria-checked={unit === u}
+                        className={'reminder-unit__btn' + (unit === u ? ' reminder-unit__btn--active' : '')}
+                        onClick={() => setUnit(u)}
+                      >
+                        {unitLabel(t, u)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              }
+            />
+          </HigGroup>
 
-          <div className="edit__field">
-            <label className="edit__label">{t('reminder.sound')}</label>
-            <div className="sound-picker" role="radiogroup" aria-label={t('reminder.sound')}>
-              {SOUND_IDS.map((id) => (
-                <button
-                  key={id}
-                  type="button"
-                  role="radio"
-                  aria-checked={soundId === id}
-                  className={'sound-chip' + (soundId === id ? ' sound-chip--active' : '')}
-                  onClick={() => pickSound(id)}
-                  title={t('feedback.sound.preview')}
-                >
-                  {soundLabel(t, id)}
-                </button>
-              ))}
-            </div>
-          </div>
+          {/* Group 2: sound */}
+          <HigGroup>
+            {SOUND_IDS.map((id) => (
+              <button
+                key={id}
+                type="button"
+                className={'sound-row' + (soundId === id ? ' sound-row--active' : '')}
+                onClick={() => pickSound(id)}
+                aria-checked={soundId === id}
+                role="radio"
+              >
+                <span className="sound-row__name">{soundLabel(t, id)}</span>
+                <span className="sound-row__check" aria-hidden>
+                  {soundId === id && (
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                         strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M5 12.5l4.5 4.5L19 7.5" />
+                    </svg>
+                  )}
+                </span>
+              </button>
+            ))}
+          </HigGroup>
+
         </div>
 
         <footer className="modal__footer">

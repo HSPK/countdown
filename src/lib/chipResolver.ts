@@ -8,7 +8,7 @@ import { uid } from './id'
  *  plain `label` string.
  *  ───────────────────────────────────────────── */
 
-export type RelativeUnit = 'min' | 'hour' | 'day'
+export type RelativeUnit = 'sec' | 'min' | 'hour' | 'day' | 'week'
 export type DateAnchor =
   | 'today' | 'tomorrow'
   | 'sun' | 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat'
@@ -37,15 +37,17 @@ export interface AbsolutePreset {
   builtin?: boolean
 }
 
-export const RELATIVE_UNITS: RelativeUnit[] = ['min', 'hour', 'day']
+export const RELATIVE_UNITS: RelativeUnit[] = ['sec', 'min', 'hour', 'day', 'week']
 export const DATE_ANCHORS: DateAnchor[] = [
   'today', 'tomorrow', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun',
 ]
 
-const MIN = 60_000
+const SEC = 1_000
+const MIN = 60 * SEC
 const HOUR = 60 * MIN
 const DAY = 24 * HOUR
-const UNIT_MS: Record<RelativeUnit, number> = { min: MIN, hour: HOUR, day: DAY }
+const WEEK = 7 * DAY
+const UNIT_MS: Record<RelativeUnit, number> = { sec: SEC, min: MIN, hour: HOUR, day: DAY, week: WEEK }
 
 const DOW: Record<Exclude<DateAnchor, 'today' | 'tomorrow'>, number> = {
   sun: 0, mon: 1, tue: 2, wed: 3, thu: 4, fri: 5, sat: 6,

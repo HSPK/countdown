@@ -14,7 +14,6 @@ import { useTodos, selectNext } from './store/todos'
 import { useHotkey } from './hooks/useHotkey'
 import { useSwipe } from './hooks/useSwipe'
 import { useNotifier } from './hooks/useNotifier'
-import { seedIfEmpty } from './lib/seed'
 import { refreshAllEnabledOnce } from './lib/subscriptions'
 
 const ORDER: TabId[] = ['home', 'all', 'settings']
@@ -46,8 +45,6 @@ export default function App() {
     return ci > pi ? 'fwd' : 'back'
   })()
   prevTabRef.current = tab
-
-  useEffect(() => { seedIfEmpty() }, [])
 
   /* Apply theme: built-in via data-theme, custom via inline tokens.
      Custom themes can optionally extend a built-in via `base`. */

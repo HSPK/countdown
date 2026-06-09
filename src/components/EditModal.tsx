@@ -2,10 +2,12 @@ import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import type { Todo } from '../store/todos'
 import { useTodos, type Recurrence } from '../store/todos'
+import type { ReminderConfig } from '../lib/reminders'
 import { WheelPicker } from './WheelPicker'
 import { Collapsible } from './Collapsible'
 import { MarkdownEditor } from './MarkdownEditor'
 import { RecurrenceField } from './RecurrenceField'
+import { RemindersField } from './RemindersField'
 import { formatAbsolute } from '../lib/time'
 import { validateTodoEdit } from '../lib/editValidation'
 import { useT } from '../lib/i18n'
@@ -34,6 +36,7 @@ export function EditModal({ todo, onClose }: Props) {
   const [tagsText, setTagsText] = useState('')
   const [recurrence, setRecurrence] = useState<Recurrence>('none')
   const [cronExpr, setCronExpr] = useState('')
+  const [reminders, setReminders] = useState<ReminderConfig[] | undefined>(undefined)
   const [showDeadlinePicker, setShowDeadlinePicker] = useState(false)
   const [showCreatedAt, setShowCreatedAt] = useState(false)
 
@@ -46,6 +49,7 @@ export function EditModal({ todo, onClose }: Props) {
     setTagsText(todo.tags.map((tag) => `#${tag}`).join(' '))
     setRecurrence(todo.recurrence ?? 'none')
     setCronExpr(todo.cronExpr ?? '')
+    setReminders(todo.reminders)
     setShowDeadlinePicker(false)
     setShowCreatedAt(false)
   }, [todo])
@@ -63,6 +67,7 @@ export function EditModal({ todo, onClose }: Props) {
       tags,
       recurrence,
       cronExpr: recurrence === 'custom' ? cronExpr.trim() : undefined,
+      reminders,
     })
     onClose()
   }
@@ -147,6 +152,8 @@ export function EditModal({ todo, onClose }: Props) {
             placeholder={t('edit.notes.placeholder')}
             emptyLabel={t('edit.notes.empty')}
           />
+
+          <RemindersField value={reminders} onChange={setReminders} />
 
         </div>
 

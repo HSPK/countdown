@@ -138,7 +138,13 @@ export function PresetEditor() {
 }
 
 function unitShort(u: RelativeUnit): string {
-  return u === 'min' ? 'm' : u === 'hour' ? 'h' : 'd'
+  switch (u) {
+    case 'sec':  return 's'
+    case 'min':  return 'm'
+    case 'hour': return 'h'
+    case 'day':  return 'd'
+    case 'week': return 'w'
+  }
 }
 
 function PresetGroup({

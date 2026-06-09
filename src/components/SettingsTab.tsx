@@ -16,7 +16,7 @@ import {
   IconHelp, IconExternal,
 } from './Icons'
 
-const APP_VERSION = '0.28'
+const APP_VERSION = '0.29'
 
 export function SettingsTab() {
   const theme = useSettings((s) => s.theme)

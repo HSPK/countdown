@@ -3259,3 +3259,6 @@ kbd {
 .list__head-btn[data-open="true"] .list__head-btn-chev {
   transform: rotate(180deg);
 }
+
+/* Stacked modal — sits above another already-open modal */
+.modal-backdrop--stacked { z-index: 300; }

@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { uid } from '../lib/id'
 import { addMonthsClamped, nextOccurrence } from '../lib/recurrence'
+import type { ReminderConfig } from '../lib/reminders'
 
 export type Recurrence = 'none' | 'daily' | 'weekly' | 'monthly' | 'custom'
 
@@ -18,6 +19,8 @@ export interface Todo {
   recurrence?: Recurrence
   /** Cron expression "M H D MON DOW" — only used when recurrence === 'custom' */
   cronExpr?: string
+  /** Per-todo reminders. Undefined → notifier falls back to DEFAULT_REMINDERS. */
+  reminders?: ReminderConfig[]
 }
 
 export interface NewTodoInput {
@@ -29,6 +32,7 @@ export interface NewTodoInput {
   createdAt?: number
   recurrence?: Recurrence
   cronExpr?: string
+  reminders?: ReminderConfig[]
 }
 
 interface TodoState {
@@ -74,6 +78,7 @@ export const useTodos = create<TodoState>()(
           pinned: false,
           recurrence: input.recurrence ?? 'none',
           cronExpr: input.cronExpr,
+          reminders: input.reminders,
         }
         set({ todos: [...get().todos, todo] })
         return id
@@ -176,6 +181,9 @@ export const useTodos = create<TodoState>()(
           pinned: !!t.pinned,
           recurrence: (t.recurrence as Recurrence) ?? 'none',
           cronExpr: t.cronExpr,
+          reminders: Array.isArray((t as Partial<Todo>).reminders)
+            ? (t as Partial<Todo>).reminders
+            : undefined,
         }))
         return { todos }
       },
